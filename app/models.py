@@ -38,10 +38,10 @@ class Customer(database.Base):
     phone_number = Column(String, index=True)
     email = Column(String, nullable=True)
     address = Column(String, nullable=True)
-    photo_adhaar = Column(String, nullable=True)  # Path to stored file
-    photo_passport = Column(String, nullable=True)  # Path to stored file
-    status = Column(String, default="pending")  # "pending", "submitted", "verified", "approved"
-    token = Column(String, unique=True, index=True)  # Token for link generation
+    photo_adhaar = Column(String, nullable=True) 
+    photo_passport = Column(String, nullable=True)  
+    status = Column(String, default="pending")  
+    token = Column(String, unique=True, index=True)  
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     branch_id = Column(Integer, ForeignKey('branches.id'))

@@ -23,7 +23,7 @@ class CustomerForm(BaseModel):
     photo_passport: Optional[str]
 
 class CustomerOut(BaseModel):
-    id: int
+    cuurl: int
     name: str
     phone_number: str
     email: Optional[str]

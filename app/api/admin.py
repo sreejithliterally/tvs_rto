@@ -17,7 +17,6 @@ def create_user(
     db: Session = Depends(database.get_db), 
     current_user: models.User = Depends(admin_required)
 ):
-    # Check if username or email already exists
     existing_user = db.query(models.User).filter(
         (models.User.username == user.username) | (models.User.email == user.email)
     ).first()
