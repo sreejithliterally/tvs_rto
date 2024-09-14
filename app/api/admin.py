@@ -45,7 +45,6 @@ def create_user(
         "last_name": new_user.last_name,
         "email": new_user.email,
         "branch_id": new_user.branch_id,
-        "is_active": new_user.is_active,
         "role_name": role_name  # Add role_name to the response
     }
     return response

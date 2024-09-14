@@ -34,7 +34,7 @@ def login(user_credentials: OAuth2PasswordRequestForm = Depends(), db: Session =
             "email": user.email,
             "role_name": role_name,
             "branch_id": user.branch_id,
-            "is_active": user.is_active
+          
         }
     }
 

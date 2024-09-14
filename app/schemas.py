@@ -15,7 +15,6 @@ class UserOut(BaseModel):
     last_name: Optional[str]  # Assuming last_name is optional
     email: str
     branch_id: Optional[int]
-    is_active: bool
     role_name: str
 
 class CustomerBase(BaseModel):
