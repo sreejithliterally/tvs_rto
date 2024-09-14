@@ -49,7 +49,7 @@ def get_current_user(token: str = Depends(oauth2_scheme_user), db: Session = Dep
 
     token = verify_access_token_user(token, credentials_exception)
 
-    user = db.query(models.User).filter(models.User.id == token.id).first()
+    user = db.query(models.User).filter(models.User.user_id == token.id).first()
 
     return user
 

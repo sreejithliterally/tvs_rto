@@ -33,8 +33,6 @@ def submit_customer_form(
     # Upload files to S3
     aadhaar_url = utils.upload_image_to_s3(aadhaar_photo, "hogspot")
     passport_url = utils.upload_image_to_s3(passport_photo, "hogspot")
-    
-    # Update customer info
     customer.email = email
     customer.address = address
     customer.photo_adhaar = aadhaar_url
