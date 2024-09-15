@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, DateTime, DECIMAL
 from sqlalchemy.orm import relationship
 from datetime import datetime
-from app import database
+import database
 from sqlalchemy.ext.declarative import declarative_base
 
 
@@ -43,9 +43,10 @@ class Customer(database.Base):
     __tablename__ = "customers"
 
     customer_id = Column(Integer, primary_key=True, index=True)
+    name = Column(String)
     first_name = Column(String)
     last_name = Column(String)
-    phone = Column(String)
+    phone_number = Column(String)
     email = Column(String, nullable=True)
     address = Column(String, nullable=True)
     photo_adhaar_front = Column(String, nullable=True)
@@ -58,7 +59,7 @@ class Customer(database.Base):
     ex_showroom_price = Column(DECIMAL(10, 2))
     tax = Column(DECIMAL(10, 2))
     onroad_price = Column(DECIMAL(10, 2))
-    
+
     link_token = Column(String, unique=True, index=True)  # Unique token for the link
     link_expiration = Column(Boolean, default=False)
     status = Column(String, default="Pending")
