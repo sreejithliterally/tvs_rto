@@ -22,6 +22,20 @@ def login(user_credentials: OAuth2PasswordRequestForm = Depends(), db: Session =
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail=f"Invalid Credentials")
 
-    access_token_user = create_access_token(data={"user_id": user.id})
+    access_token_user = create_access_token(data={"user_id": user.user_id})
+    role_name = db.query(models.Role.role_name).filter(models.Role.role_id==user.role_id).scalar()
+    response = {
+        "access_token": access_token_user,
+        "token_type": "bearer",
+        "user": {
+            "user_id": user.user_id,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "email": user.email,
+            "role_name": role_name,
+            "branch_id": user.branch_id,
+          
+        }
+    }
 
-    return {"access_token": access_token_user, "token_type": "bearer"}
+    return response
