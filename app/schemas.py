@@ -20,12 +20,24 @@ class UserOut(BaseModel):
 class CustomerBase(BaseModel):
     name: str
     phone_number: str
+    vehicle_name: str
+    vehicle_variant: str
+    vehicle_color: Optional[str] = None
+    ex_showroom_price: float
+    tax: float
+    onroad_price: float
 
 class CustomerForm(BaseModel):
-    email: Optional[str]
-    address: Optional[str]
-    photo_adhaar: Optional[str]
-    photo_passport: Optional[str]
+    photo_adhaar_front: Optional[str] = None  # URL or S3 key for the Aadhaar front photo
+    photo_adhaar_back: Optional[str] = None  # URL or S3 key for the Aadhaar back photo
+    photo_passport: Optional[str] = None  # URL or S3 key for the passport photo
+    vehicle_name: str
+    vehicle_variant: str
+    vehicle_color: Optional[str] = None
+    ex_showroom_price: float
+    tax: float
+    onroad_price: float
+    link_token: str  # Token from the generated link to identify the customer record
 
 class CustomerOut(BaseModel):
     cuurl: int
