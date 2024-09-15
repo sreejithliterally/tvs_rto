@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, DateTime, DECIMAL
 from sqlalchemy.orm import relationship
 from datetime import datetime
-import database
+from app import database
 from sqlalchemy.ext.declarative import declarative_base
 
 
@@ -51,16 +51,22 @@ class Customer(database.Base):
     photo_adhaar_front = Column(String, nullable=True)
     photo_adhaar_back = Column(String, nullable=True)
     photo_passport = Column(String, nullable=True)
-    branch_id = Column(Integer, ForeignKey('branches.branch_id'))
-    sales_executive_id = Column(Integer, ForeignKey('users.user_id'))
+
     vehicle_name = Column(String)
     vehicle_variant = Column(String)
+    vehicle_color = Column(String)
     ex_showroom_price = Column(DECIMAL(10, 2))
     tax = Column(DECIMAL(10, 2))
     onroad_price = Column(DECIMAL(10, 2))
-    finance_id = Column(Integer, ForeignKey('finance_options.finance_id'), nullable=True)
+    
+    link_token = Column(String, unique=True, index=True)  # Unique token for the link
+    link_expiration = Column(Boolean, default=False)
     status = Column(String, default="Pending")
     created_at = Column(DateTime, default=datetime.utcnow)
+    branch_id = Column(Integer, ForeignKey('branches.branch_id'))
+    sales_executive_id = Column(Integer, ForeignKey('users.user_id'))
+    finance_id = Column(Integer, ForeignKey('finance_options.finance_id'), nullable=True)
+    
 
     branch = relationship("Branch", back_populates="customers")
 
