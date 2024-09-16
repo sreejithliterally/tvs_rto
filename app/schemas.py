@@ -46,6 +46,15 @@ class CustomerOut(BaseModel):
     phone_number: str
     status: str
     branch_id: int
+    photo_adhaar_front: Optional[str] = None  # URL or S3 key for the Aadhaar front photo
+    photo_adhaar_back: Optional[str] = None  # URL or S3 key for the Aadhaar back photo
+    photo_passport: Optional[str] = None  # URL or S3 key for the passport photo
+    vehicle_name: str
+    vehicle_variant: str
+    vehicle_color: Optional[str] = None
+    ex_showroom_price: float
+    tax: float
+    onroad_price: float
     sales_verified: bool
     accounts_verified: bool
 
@@ -79,6 +88,8 @@ class CustomerResponse(BaseModel):
     phone_number: str
     email: Optional[str]
     vehicle_name: str
+    vehicle_variant: str
+    vehicle_color: Optional[str] = None
     sales_verified: bool
     accounts_verified: bool
     status: str

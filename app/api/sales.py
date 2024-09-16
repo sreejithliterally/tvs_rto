@@ -78,6 +78,11 @@ def get_customers_for_sales_executive(db: Session = Depends(database.get_db), cu
             "branch_id": customer.branch_id,
             "sales_verified": customer.sales_verified,
             "accounts_verified": customer.accounts_verified,
+            "vehicle_name": customer.vehicle_name,
+            "vehicle_variant": customer.vehicle_variant,
+            "ex_showroom_price": customer.ex_showroom_price,
+            "tax": customer.tax,
+            "onroad_price": customer.onroad_price,
         }
         for customer in customers
     ]
