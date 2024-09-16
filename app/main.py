@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import models
 import database
-from api import admin, login, sales, customer
+from api import admin, login, sales, customer, accounts
 from dotenv import load_dotenv
 
 
@@ -28,6 +28,7 @@ app.include_router(admin.router)
 app.include_router(login.router)
 app.include_router(sales.router)
 app.include_router(customer.router)
+app.include_router(accounts.router)
 
 
 @app.get("/")

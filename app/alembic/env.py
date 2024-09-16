@@ -1,7 +1,7 @@
 from logging.config import fileConfig
 import os
 from sqlalchemy import engine_from_config, pool
-from app import models
+import models
 from alembic import context
 from dotenv import load_dotenv
 from pathlib import Path

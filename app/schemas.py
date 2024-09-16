@@ -1,3 +1,4 @@
+from datetime import datetime
 from pydantic import BaseModel, EmailStr
 from typing import Optional
 
@@ -40,12 +41,14 @@ class CustomerForm(BaseModel):
     link_token: str  # Token from the generated link to identify the customer record
 
 class CustomerOut(BaseModel):
-    cuurl: int
+    customer_id: int
     name: str
     phone_number: str
     email: Optional[str]
     status: str
     branch_id: int
+    sales_varified: bool
+    accounts_verified:bool
 
     class Config:
         orm_mode = True
@@ -59,3 +62,29 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     id: int
+
+
+
+
+class CustomerUpdate(BaseModel):
+    name: Optional[str]
+    phone_number: Optional[str]
+    email: Optional[str]
+    vehicle_name: Optional[str]
+    sales_verified: Optional[bool]
+    accounts_verified: Optional[bool]
+    status: Optional[str]
+
+class CustomerResponse(BaseModel):
+    customer_id: int
+    name: str
+    phone_number: str
+    email: Optional[str]
+    vehicle_name: str
+    sales_verified: bool
+    accounts_verified: bool
+    status: str
+    created_at: datetime
+
+    class Config:
+        orm_mode = True
