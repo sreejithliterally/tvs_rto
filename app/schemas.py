@@ -44,15 +44,13 @@ class CustomerOut(BaseModel):
     customer_id: int
     name: str
     phone_number: str
-    email: Optional[str]
     status: str
     branch_id: int
-    sales_varified: bool
-    accounts_verified:bool
+    sales_verified: bool
+    accounts_verified: bool
 
     class Config:
         orm_mode = True
-
 class Token(BaseModel):
     access_token: str
     token_type: str
