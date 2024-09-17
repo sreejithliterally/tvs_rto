@@ -24,7 +24,8 @@ def create_customer(customer: schemas.CustomerBase, db: Session = Depends(databa
         vehicle_color=customer.vehicle_color,
         ex_showroom_price= customer.ex_showroom_price,
         tax= customer.tax,
-        onroad_price= customer.onroad_price
+        onroad_price= customer.onroad_price,
+        sales_executive_id = current_user.user_id
     )
     db.add(new_customer)
     db.commit()
@@ -66,7 +67,8 @@ def get_customers_for_sales_executive(db: Session = Depends(database.get_db), cu
     if current_user.role_id != 2:
         raise HTTPException(status_code=403, detail="Not authorized.")
     
-    customers = db.query(models.Customer).filter(models.Customer.branch_id == current_user.branch_id).all()
+    customers = db.query(models.Customer).filter(models.Customer.branch_id == current_user.branch_id,
+                                                 models.Customer.sales_executive_id== current_user.user_id).all()
 
     #will return the customers' data relevant to the sales executive
     customer_data = [
