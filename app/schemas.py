@@ -43,23 +43,28 @@ class CustomerForm(BaseModel):
 class CustomerOut(BaseModel):
     customer_id: int
     name: str
+    first_name : Optional[str] = None
+    last_name: Optional[str] = None
+    address: Optional[str] = None
     phone_number: str
     status: str
     branch_id: int
     photo_adhaar_front: Optional[str] = None  # URL or S3 key for the Aadhaar front photo
     photo_adhaar_back: Optional[str] = None  # URL or S3 key for the Aadhaar back photo
     photo_passport: Optional[str] = None  # URL or S3 key for the passport photo
-    vehicle_name: str
-    vehicle_variant: str
+    vehicle_name: Optional[str] = None  # Marked as optional
+    vehicle_variant: Optional[str] = None  # Marked as optional
     vehicle_color: Optional[str] = None
-    ex_showroom_price: float
-    tax: float
-    onroad_price: float
+    ex_showroom_price: Optional[float] = None  # Marked as optional
+    tax: Optional[float] = None  # Marked as optional
+    onroad_price: Optional[float] = None  # Marked as optional
     sales_verified: bool
     accounts_verified: bool
 
     class Config:
         orm_mode = True
+
+
 class Token(BaseModel):
     access_token: str
     token_type: str
