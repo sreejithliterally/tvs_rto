@@ -58,3 +58,14 @@ def get_all_branches(db: Session = Depends(database.get_db), current_user: model
     total_branches = db.query(models.Branch).all()
 
     return total_branches
+
+@router.get("/admin/branches/{branch_id}/{role_id}")
+def get_employees(branch_id: int, role_id:int, db: Session = Depends(database.get_db), current_user: models.User = Depends(oauth2.get_current_user)):
+    if current_user.role_id != 1:
+        raise HTTPException(status_code=403, detail="Not authorized.")
+    
+    employees_list = db.query(models.User).filter(models.User.branch_id == branch_id,
+                                                  models.User.role_id== role_id).all()
+
+
+    return employees_list
