@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-import models, schemas, utils, database
+import models, schemas, utils, database, oauth2
 from oauth2 import get_current_user
 from schemas import UserCreate
 from utils import hash
@@ -11,7 +11,7 @@ def admin_required(current_user: models.User = Depends(get_current_user)):
     if current_user.role_id != 1:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required")
 
-@router.post("/create_user", response_model=schemas.UserOut)
+@router.post("/admin/create_user", response_model=schemas.UserOut)
 def create_user(
     user: UserCreate, 
     db: Session = Depends(database.get_db), 
@@ -48,3 +48,13 @@ def create_user(
         "role_name": role_name  # Add role_name to the response
     }
     return response
+
+
+@router.get("/admin/branches")
+def get_all_branches(db: Session = Depends(database.get_db), current_user: models.User = Depends(oauth2.get_current_user)):
+    if current_user.role_id != 1:
+        raise HTTPException(status_code=403, detail="Not authorized.")
+    
+    total_branches = db.query(models.Branch).all()
+
+    return total_branches
