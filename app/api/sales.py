@@ -30,7 +30,8 @@ def create_customer(customer: schemas.CustomerBase, db: Session = Depends(databa
         tax= customer.tax,
         onroad_price= customer.onroad_price,
         sales_executive_id = current_user.user_id,
-        finance_id = customer.finance_id
+        finance_id=customer.finance_id if customer.finance_id else None
+
     )
     db.add(new_customer)
     db.commit()
