@@ -13,12 +13,14 @@ router = APIRouter(
     dependencies=[Depends(oauth2.get_current_user)]
 )
 
-
 def compress_image(image_file: UploadFile, max_size_kb: int = 400) -> BytesIO:
-    # Open the image file
+    # Open the image file directly from UploadFile's underlying file object
     image = Image.open(image_file.file)
 
-    # Compress image by adjusting quality and format
+    if image.mode in ("RGBA", "P"):  # Convert PNG or other types to RGB
+        image = image.convert("RGB")
+
+    # Create a buffer to hold the compressed image
     buffer = BytesIO()
     quality = 85  # Start with quality of 85
 
@@ -27,7 +29,7 @@ def compress_image(image_file: UploadFile, max_size_kb: int = 400) -> BytesIO:
     buffer.seek(0)
 
     # Reduce quality if the image size exceeds max_size_kb
-    while buffer.tell() > max_size_kb * 1024:
+    while buffer.tell() > max_size_kb * 1024 and quality > 5:  # Avoid reducing quality below 5
         quality -= 5
         buffer = BytesIO()  # Clear the buffer
         image.save(buffer, format="JPEG", quality=quality)
@@ -77,9 +79,9 @@ def submit_customer_form(
         raise HTTPException(status_code=404, detail="Customer not found.")
     
     # Compress images before uploading
-    compressed_aadhaar_front = utils.compress_image(aadhaar_front_photo.file)
-    compressed_aadhaar_back = utils.compress_image(aadhaar_back_photo.file)
-    compressed_passport = utils.compress_image(passport_photo.file)
+    compressed_aadhaar_front = compress_image(aadhaar_front_photo)
+    compressed_aadhaar_back = compress_image(aadhaar_back_photo)
+    compressed_passport = compress_image(passport_photo)
 
     # Upload compressed images to S3
     aadhaar_front_url = utils.upload_image_to_s3(compressed_aadhaar_front, "hogspot", "aadhaar_front.jpg")
@@ -103,11 +105,12 @@ def submit_customer_form(
     full_name = f"{first_name} {last_name}"
     
     return schemas.CustomerResponse(
-        customer_id=customer.id,
+        customer_id=customer.customer_id,
         name=full_name,
         phone_number=customer.phone_number,
         email=customer.email,
         vehicle_name=customer.vehicle_name,
+        vehicle_variant=customer.vehicle_variant,
         sales_verified=customer.sales_verified,
         accounts_verified=customer.accounts_verified,
         status=customer.status,
