@@ -101,3 +101,10 @@ class CustomerResponse(BaseModel):
 
     class Config:
         orm_mode = True
+
+
+
+
+class CustomerUpdate(BaseModel):
+    accounts_verified: Optional[bool]
+    status: Optional[str]

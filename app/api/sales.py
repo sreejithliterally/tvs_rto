@@ -5,7 +5,11 @@ from uuid import uuid4
 import models, schemas, database, oauth2
 from schemas import CustomerResponse , CustomerUpdate
 
-router = APIRouter()
+router = APIRouter(
+    prefix="/sales",
+    tags=["Sales"],
+    dependencies=[Depends(oauth2.get_current_user)]
+)
 
 @router.post("/sales/create-customer")
 def create_customer(customer: schemas.CustomerBase, db: Session = Depends(database.get_db), current_user: models.User = Depends(oauth2.get_current_user)):

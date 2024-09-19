@@ -1,8 +1,13 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
+from typing import List
 from sqlalchemy.orm import Session
-import models , database , oauth2
+import models , database , oauth2 , schemas
 
-router = APIRouter()
+router = APIRouter(
+    prefix="/accounts",
+    tags=["Accounts"],
+    dependencies=[Depends(oauth2.get_current_user)]
+)
 
 
 
@@ -26,3 +31,54 @@ def verify_customer_by_accounts(customer_id: int, db: Session = Depends(database
     db.commit()
 
     return {"message": "Accounts verification completed."}
+
+# Helper function to check if user has the accounts role
+def is_user_in_accounts_role(user: models.User):
+    if user.role_id != 3:  # Assuming role_id 3 is for accounts role
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have access to this resource"
+        )
+
+# 1. View all customer data approved by sales for the user's branch
+@router.get("/customers", response_model=List[schemas.CustomerOut])
+def get_customers_for_branch(db: Session = Depends(database.get_db), current_user: models.User = Depends(oauth2.get_current_user)):
+    is_user_in_accounts_role(current_user)
+    
+    # Fetch customers only from the user's branch where sales are verified
+    customers = db.query(models.Customer).filter(
+        models.Customer.branch_id == current_user.branch_id,
+        models.Customer.sales_verified == True
+    ).all()
+    
+    return customers
+
+# 2. Edit customer data (accounts verification)
+@router.put("/customers/{customer_id}", response_model=schemas.CustomerOut)
+def update_customer_accounts(
+    customer_id: int,
+    customer_update: schemas.CustomerUpdate,
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(oauth2.get_current_user)
+):
+    is_user_in_accounts_role(current_user)
+    
+    # Find the customer in the user's branch
+    customer = db.query(models.Customer).filter(
+        models.Customer.customer_id == customer_id,
+        models.Customer.branch_id == current_user.branch_id
+    ).first()
+    
+    if not customer:
+        raise HTTPException(status_code=404, detail="Customer not found")
+    
+    if customer_update.accounts_verified is not None:
+        customer.accounts_verified = customer_update.accounts_verified
+    
+    if customer_update.status is not None:
+        customer.status = customer_update.status
+    
+    db.commit()
+    db.refresh(customer)
+    
+    return customer
