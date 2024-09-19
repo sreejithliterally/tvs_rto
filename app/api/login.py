@@ -22,9 +22,9 @@ def login(user_credentials: OAuth2PasswordRequestForm = Depends(), db: Session =
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail=f"Invalid Credentials")
     
-    if not user.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="User account is inactive")
+    # if not user.is_active:
+    #     raise HTTPException(
+    #         status_code=status.HTTP_403_FORBIDDEN, detail="User account is inactive")
 
     access_token_user = create_access_token(data={"user_id": user.user_id})
     role_name = db.query(models.Role.role_name).filter(models.Role.role_id==user.role_id).scalar()
