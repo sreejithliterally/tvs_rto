@@ -77,14 +77,7 @@ class TokenData(BaseModel):
 
 
 
-class CustomerUpdate(BaseModel):
-    name: Optional[str]
-    phone_number: Optional[str]
-    email: Optional[str]
-    vehicle_name: Optional[str]
-    sales_verified: Optional[bool]
-    accounts_verified: Optional[bool]
-    status: Optional[str]
+
 
 class CustomerResponse(BaseModel):
     customer_id: int
@@ -101,3 +94,42 @@ class CustomerResponse(BaseModel):
 
     class Config:
         orm_mode = True
+
+
+class CustomerUpdatesales(BaseModel):
+    name: str
+    first_name : Optional[str] = None
+    last_name: Optional[str] = None
+    address: Optional[str] = None
+    phone_number: str
+    status: str
+    photo_adhaar_front: Optional[str] = None  # URL or S3 key for the Aadhaar front photo
+    photo_adhaar_back: Optional[str] = None  # URL or S3 key for the Aadhaar back photo
+    photo_passport: Optional[str] = None  # URL or S3 key for the passport photo
+    vehicle_name: Optional[str] = None  # Marked as optional
+    vehicle_variant: Optional[str] = None  # Marked as optional
+    vehicle_color: Optional[str] = None
+    ex_showroom_price: Optional[float] = None  # Marked as optional
+    tax: Optional[float] = None  # Marked as optional
+    onroad_price: Optional[float] = None  # Marked as optional
+    sales_verified: Optional[bool]
+    status: Optional[str]
+
+class CustomerUpdate(BaseModel):
+    name: str
+    first_name : Optional[str] = None
+    last_name: Optional[str] = None
+    address: Optional[str] = None
+    phone_number: str
+    status: str
+    photo_adhaar_front: Optional[str] = None  # URL or S3 key for the Aadhaar front photo
+    photo_adhaar_back: Optional[str] = None  # URL or S3 key for the Aadhaar back photo
+    photo_passport: Optional[str] = None  # URL or S3 key for the passport photo
+    vehicle_name: Optional[str] = None  # Marked as optional
+    vehicle_variant: Optional[str] = None  # Marked as optional
+    vehicle_color: Optional[str] = None
+    ex_showroom_price: Optional[float] = None  # Marked as optional
+    tax: Optional[float] = None  # Marked as optional
+    onroad_price: Optional[float] = None  # Marked as optional
+    accounts_verified: Optional[bool]
+    status: Optional[str]

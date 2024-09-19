@@ -5,7 +5,11 @@ from oauth2 import get_current_user
 from schemas import UserCreate
 from utils import hash
 
-router = APIRouter()
+router = APIRouter(
+    prefix="/admin",
+    tags=["Admin"],
+    dependencies=[Depends(oauth2.get_current_user)]
+)
 
 def admin_required(current_user: models.User = Depends(get_current_user)):
     if current_user.role_id != 1:
