@@ -35,6 +35,30 @@ def compress_image(image_file: UploadFile, max_size_kb: int = 400) -> BytesIO:
 
     return buffer
 
+
+@router.get("/customer-form/{link_token}")
+def get_customer_data(link_token: str, db: Session = Depends(database.get_db)):
+    # Query the customer by link_token
+    customer = db.query(models.Customer).filter(models.Customer.link_token == link_token).first()
+
+    if not customer:
+        raise HTTPException(status_code=404, detail="Customer not found.")
+
+    # Return necessary customer details
+    customer_data = {
+        "name": customer.name,
+        "phone_number": customer.phone_number,
+        "vehicle_name": customer.vehicle_name,
+        "vehicle_variant": customer.vehicle_variant,
+        "vehicle_color": customer.vehicle_color,
+        "ex_showroom_price": customer.ex_showroom_price,
+        "tax": customer.tax,
+        "onroad_price": customer.onroad_price
+    }
+
+    return customer_data
+
+
 @router.post("/customer/{link_token}", response_model=schemas.CustomerResponse)
 def submit_customer_form(
     link_token: str,

@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import models
 import database
-from api import admin, login, sales, customer, accounts
+from api import admin, login, sales, customer, accounts, finance
 from dotenv import load_dotenv
 
 
@@ -29,8 +29,9 @@ app.include_router(login.router)
 app.include_router(sales.router)
 app.include_router(customer.router)
 app.include_router(accounts.router)
+app.include_router(finance.router)
 
 
 @app.get("/")
 async def root():
-    return {"message": "Hello World"}
+    return {"message": "Welcome to API docs of Top Haven Tvs RTO registration automation softwate. Please go to /docs page to view the documentation"}
