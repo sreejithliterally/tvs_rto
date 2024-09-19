@@ -10,7 +10,7 @@ from PIL import Image
 router = APIRouter(
     prefix="/customer",
     tags=["Customer"],
-    dependencies=[Depends(oauth2.get_current_user)]
+    
 )
 
 def compress_image(image_file: UploadFile, max_size_kb: int = 400) -> BytesIO:
