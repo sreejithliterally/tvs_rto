@@ -3,7 +3,7 @@ from typing import List
 from sqlalchemy.orm import Session
 from uuid import uuid4
 import models, schemas, database, oauth2
-from schemas import CustomerResponse , CustomerUpdate
+from schemas import CustomerResponse , CustomerUpdate, CustomerUpdatesales
 
 router = APIRouter(
     prefix="/sales",
@@ -102,7 +102,7 @@ def get_customers_for_sales_executive(db: Session = Depends(database.get_db), cu
 
 
 @router.put("/customers/{customer_id}", response_model=CustomerResponse)
-def update_customer(customer_id: int, update_data: CustomerUpdate, db: Session = Depends(database.get_db)):
+def update_customer(customer_id: int, update_data: CustomerUpdatesales, db: Session = Depends(database.get_db)):
     # Fetch the customer from the database
     customer = db.query(models.Customer).filter(models.Customer.customer_id == customer_id).first()
     
