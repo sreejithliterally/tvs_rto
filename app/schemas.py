@@ -133,3 +133,37 @@ class CustomerUpdate(BaseModel):
     onroad_price: Optional[float] = None  # Marked as optional
     accounts_verified: Optional[bool]
     status: Optional[str]
+
+
+class BranchCreate(BaseModel):
+    name: str
+    address: str
+    phone_number: str
+    branch_manager: str
+
+class BranchUpdate(BaseModel):
+    name: str
+    address: str
+    phone_number: str
+    branch_manager: str
+
+# Schema for returning branch information
+class Branch(BaseModel):
+    branch_id: int
+    name: str
+    address: Optional[str]
+    branch_manager: Optional[str]
+    phone_number: Optional[str]
+
+    class Config:
+        orm_mode = True
+
+class BranchResponse(BaseModel):
+    branch_id: int
+    name: str
+    address: str
+    phone_number: str
+    branch_manager: str
+
+    class Config:
+        orm_mode = True
