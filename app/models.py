@@ -13,6 +13,10 @@ class Branch(database.Base):
 
     branch_id = Column(Integer, primary_key=True, index=True)
     name = Column(String, unique=True, index=True)
+    address = Column(String, nullable=False)
+    phone_number = Column(String, nullable=False, unique=True)
+    branch_manager = Column(String, nullable=False)
+
 
     users = relationship("User", back_populates="branch")
     customers = relationship("Customer", back_populates="branch")
