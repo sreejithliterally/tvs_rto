@@ -75,6 +75,9 @@ class Token(BaseModel):
 class TokenData(BaseModel):
     id: int
 
+class FinanceCreate(BaseModel):
+    company_name:str
+    details: Optional[str]
 
 
 
