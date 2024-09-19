@@ -9,7 +9,7 @@ from PIL import Image
 
 router = APIRouter(
     prefix="/customer",
-    tags=["Customer"],
+    tags=["Customer"]
     
 )
 
