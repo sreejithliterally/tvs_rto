@@ -27,6 +27,7 @@ class CustomerBase(BaseModel):
     ex_showroom_price: float
     tax: float
     onroad_price: float
+    finance_id: Optional[int] = None
 
 class CustomerForm(BaseModel):
     photo_adhaar_front: Optional[str] = None  # URL or S3 key for the Aadhaar front photo
