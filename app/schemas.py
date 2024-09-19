@@ -134,3 +134,8 @@ class CustomerUpdate(BaseModel):
     onroad_price: Optional[float] = None  # Marked as optional
     accounts_verified: Optional[bool]
     status: Optional[str]
+
+
+class FinanceCreate(BaseModel):
+    company_name: str
+    details: Optional[str]
