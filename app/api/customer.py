@@ -61,7 +61,7 @@ def get_customer_data(link_token: str, db: Session = Depends(database.get_db)):
     return customer_data
 
 
-@router.post("/customer/{link_token}", response_model=schemas.CustomerResponse)
+@router.post("/{link_token}", response_model=schemas.CustomerResponse)
 def submit_customer_form(
     link_token: str,
     first_name: str = Form(...),

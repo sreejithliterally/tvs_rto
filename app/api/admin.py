@@ -17,7 +17,7 @@ def admin_required(current_user: models.User = Depends(get_current_user)):
     if current_user.role_id != 1:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required")
 
-@router.post("/admin/create_user", response_model=schemas.UserOut)
+@router.post("/create_user", response_model=schemas.UserOut)
 def create_user(
     user: UserCreate, 
     db: Session = Depends(database.get_db), 
@@ -59,7 +59,7 @@ def create_user(
 
 
 
-@router.get("/admin/branches/{branch_id}/{role_id}")
+@router.get("/branches/{branch_id}/{role_id}")
 def get_employees(branch_id: int, role_id:int, db: Session = Depends(database.get_db), current_user: models.User = Depends(oauth2.get_current_user)):
     if current_user.role_id != 1:
         raise HTTPException(status_code=403, detail="Not authorized.")
@@ -70,7 +70,7 @@ def get_employees(branch_id: int, role_id:int, db: Session = Depends(database.ge
 
     return employees_list
 
-@router.get("/admin/users", response_model=List[schemas.UserOut])
+@router.get("/users", response_model=List[schemas.UserOut])
 def get_all_users(db: Session = Depends(database.get_db), current_user: models.User = Depends(admin_required)):
     users = db.query(models.User).all()
 
@@ -91,7 +91,7 @@ def get_all_users(db: Session = Depends(database.get_db), current_user: models.U
 
     return user_list
 
-@router.get("/admin/users/{user_id}", response_model=schemas.UserOut)
+@router.get("/users/{user_id}", response_model=schemas.UserOut)
 def get_user_by_id(user_id: int, db: Session = Depends(database.get_db), current_user: models.User = Depends(admin_required)):
     user = db.query(models.User).filter(models.User.user_id == user_id).first()
     
@@ -109,7 +109,7 @@ def get_user_by_id(user_id: int, db: Session = Depends(database.get_db), current
         "role_name": role_name
     }
 
-@router.put("/admin/users/{user_id}", response_model=schemas.UserOut)
+@router.put("/users/{user_id}", response_model=schemas.UserOut)
 def update_user(user_id: int, user: schemas.UserCreate, db: Session = Depends(database.get_db), current_user: models.User = Depends(admin_required)):
     user_in_db = db.query(models.User).filter(models.User.user_id == user_id).first()
 
@@ -135,7 +135,7 @@ def update_user(user_id: int, user: schemas.UserCreate, db: Session = Depends(da
         "branch_id": user_in_db.branch_id,
         "role_name": role_name
     }
-@router.delete("/admin/users/{user_id}")
+@router.delete("/users/{user_id}")
 def delete_user(user_id: int, db: Session = Depends(database.get_db), current_user: models.User = Depends(admin_required)):
     user = db.query(models.User).filter(models.User.user_id == user_id).first()
 
@@ -149,7 +149,7 @@ def delete_user(user_id: int, db: Session = Depends(database.get_db), current_us
 
 
 
-@router.post("/admin/branches", response_model=BranchResponse)
+@router.post("/branches", response_model=BranchResponse)
 def create_branch(branch: BranchCreate, db: Session = Depends(database.get_db), current_user: models.User = Depends(admin_required)):
     new_branch = models.Branch(
         name=branch.name,

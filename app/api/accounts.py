@@ -11,7 +11,7 @@ router = APIRouter(
 
 
 
-@router.post("/verify/accounts/{customer_id}")
+@router.post("/verify/{customer_id}")
 def verify_customer_by_accounts(customer_id: int, db: Session = Depends(database.get_db), current_user: models.User = Depends(oauth2.get_current_user)):
     if current_user.role_id != 3:  
         raise HTTPException(status_code=403, detail="Not authorized.")

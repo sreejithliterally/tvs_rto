@@ -11,7 +11,7 @@ router = APIRouter(
     dependencies=[Depends(oauth2.get_current_user)]
 )
 
-@router.post("/sales/create-customer")
+@router.post("/create-customer")
 def create_customer(customer: schemas.CustomerBase, db: Session = Depends(database.get_db), current_user: models.User = Depends(oauth2.get_current_user)):
     if current_user.role_id != 2:
         raise HTTPException(status_code=403, detail="Not authorized.")
@@ -40,7 +40,7 @@ def create_customer(customer: schemas.CustomerBase, db: Session = Depends(databa
     customer_link = f"http://localhost:3000/customer-form/{customer_token}"
     return {"customer_link": customer_link}
 
-@router.post("/verify/sales/{customer_id}")
+@router.post("/verify/{customer_id}")
 def verify_customer_sales(customer_id: int, db: Session = Depends(database.get_db), current_user: models.User = Depends(oauth2.get_current_user)):
     # Ensure the user is a sales executive (role_id == 2 for sales executive)
     if current_user.role_id != 2:
@@ -68,7 +68,7 @@ def verify_customer_sales(customer_id: int, db: Session = Depends(database.get_d
     return {"message": "Customer sales verification completed."}
 
 
-@router.get("/sales/customers", response_model=List[schemas.CustomerOut])
+@router.get("/customers", response_model=List[schemas.CustomerOut])
 def get_customers_for_sales_executive(db: Session = Depends(database.get_db), current_user: models.User = Depends(oauth2.get_current_user)):
     if current_user.role_id != 2:
         raise HTTPException(status_code=403, detail="Not authorized.")
@@ -123,7 +123,7 @@ def update_customer(customer_id: int, update_data: CustomerUpdatesales, db: Sess
 
 
 
-@router.get("/sales/customers/count")
+@router.get("/customers/count")
 def get_customer_count_for_sales_executive(db: Session = Depends(database.get_db), current_user: models.User = Depends(oauth2.get_current_user)):
     if current_user.role_id != 2:
         raise HTTPException(status_code=403, detail="Not authorized.")
