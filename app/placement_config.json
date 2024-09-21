@@ -1,0 +1,207 @@
+{
+    "stamps": [
+      {
+        "name": "dealerstamp.png",
+        "placements": [
+          {
+            "page": 2,
+            "position": {
+              "x": 450,
+              "y": 580
+            },
+            "width": 100,
+            "height": 100
+          }
+        ]
+      }
+    ],
+    "finances": {
+      "tvscredit": {
+        "seals": [
+          {
+            "name": "tvscreditau.png",
+            "placements": [
+              {
+                "page": 3,
+                "position": {
+                  "x": 20,
+                  "y": 490
+                },
+                "width": 150,
+                "height": 150
+              },
+              {
+                "page": 3,
+                "position": {
+                  "x": 90,
+                  "y": 480
+                },
+                "width": 150,
+                "height": 150
+              }
+            ]
+          },        
+          {
+            "name": "tvscreditsign.png",
+            "placements": [
+              {
+                "page": 3,
+                "position": {
+                  "x": 20,
+                  "y": 57
+                },
+                "width": 150,
+                "height": 150
+              },
+              {
+                "page": 3,
+                "position": {
+                  "x": 20,
+                  "y": 350
+                },
+                "width": 150,
+                "height": 150
+              }
+            ]
+          },
+          {
+            "name": "tvscreditnosign.png",
+            "placements": [
+              {
+                "page": 3,
+                "position": {
+                  "x": 420,
+                  "y": 0
+                },
+                "width": 150,
+                "height": 150
+              },
+              {
+                "page": 3,
+                "position": {
+                  "x": 420,
+                  "y": 350
+                },
+                "width": 150,
+                "height": 150
+              }
+            ]
+          }
+        ]
+      },
+      "idfc": {
+        "seals": [
+          {
+            "name": "idfcau.png",
+            "placements": [
+              {
+                "page": 3,
+                "position": {
+                  "x": 20,
+                  "y": 490
+                },
+                "width": 150,
+                "height": 150
+              },
+              {
+                "page": 3,
+                "position": {
+                  "x": 90,
+                  "y": 480
+                },
+                "width": 150,
+                "height": 150
+              }
+            ]
+          },        
+          {
+            "name": "idfcsign.png",
+            "placements": [
+              {
+                "page": 3,
+                "position": {
+                  "x": 20,
+                  "y": 57
+                },
+                "width": 150,
+                "height": 150
+              },
+              {
+                "page": 3,
+                "position": {
+                  "x": 20,
+                  "y": 350
+                },
+                "width": 150,
+                "height": 150
+              }
+            ]
+          },
+          {
+            "name": "idfcnosign.png",
+            "placements": [
+              {
+                "page": 3,
+                "position": {
+                  "x": 420,
+                  "y": 0
+                },
+                "width": 150,
+                "height": 150
+              },
+              {
+                "page": 3,
+                "position": {
+                  "x": 420,
+                  "y": 350
+                },
+                "width": 150,
+                "height": 150
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "signature": {
+      "placements": [
+        {
+          "page": 2,
+          "position": {
+            "x": 380,
+            "y": 650
+          },
+          "width": 150,
+          "height": 150
+        },
+        {
+          "page": 3,
+          "position": {
+            "x": 430,
+            "y": 57
+          },
+          "width": 150,
+          "height": 150
+        },
+        {
+          "page": 3,
+          "position": {
+            "x": 360,
+            "y": 500
+          },
+          "width": 150,
+          "height": 150
+        },
+        {
+          "page": 3,
+          "position": {
+            "x": 420,
+            "y": 490
+          },
+          "width": 150,
+          "height": 150
+        }
+      ]
+    }
+  }
+  

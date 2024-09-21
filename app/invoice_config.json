@@ -1,0 +1,32 @@
+{
+    "stamps": [
+      {
+        "name": "dealerstamp.png",
+        "placements": [
+          {
+            "page": 1,
+            "position": {
+              "x": 430,
+              "y": 530
+            },
+            "width": 150,
+            "height": 150
+          }
+        ]
+      }
+    ],
+    "signature": {
+      "placements": [
+        {
+          "page": 1,
+          "position": {
+            "x": 450,
+            "y": 320
+          },
+          "width": 150,
+          "height": 150
+        }
+      ]
+    }
+  }
+  
