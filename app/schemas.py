@@ -21,12 +21,19 @@ class UserOut(BaseModel):
 class CustomerBase(BaseModel):
     name: str
     phone_number: str
+    alternate_phone_number : str
     vehicle_name: str
     vehicle_variant: str
     vehicle_color: Optional[str] = None
     ex_showroom_price: float
     tax: float
-    onroad_price: float
+    insurance: float
+    tp_registration : float
+    man_accessories: float
+    optional_accessories : float
+    booking: float
+    total_price : float
+    finance_amount: Optional[float] = None
     finance_id: Optional[int] = None
 
 class CustomerForm(BaseModel):

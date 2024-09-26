@@ -6,6 +6,7 @@ from uuid import uuid4
 import models, schemas, database, oauth2
 import utils
 from PIL import Image
+from datetime import datetime
 
 router = APIRouter(
     prefix="/customer",
@@ -55,7 +56,13 @@ def get_customer_data(link_token: str, db: Session = Depends(database.get_db)):
         "vehicle_color": customer.vehicle_color,
         "ex_showroom_price": customer.ex_showroom_price,
         "tax": customer.tax,
-        "onroad_price": customer.onroad_price
+        "insurance" : customer.insurance,
+        "tp_registration" : customer.tp_registration,
+        "man_accessories" : customer.man_accessories,
+        "optional_accessories" : customer.optional_accessories,
+        "total_price" : customer.total_price,
+        "booking" : customer.booking,
+        "finance_amount" : customer.finance_amount,
     }
 
     return customer_data
@@ -66,8 +73,12 @@ def submit_customer_form(
     link_token: str,
     first_name: str = Form(...),
     last_name: str = Form(...), 
+    dob: str = Form(...),
     email: str = Form(...), 
     address: str = Form(...), 
+    pin_code: str = Form(...),
+    nominee: str = Form(...),
+    relation: str = Form(...),
     aadhaar_front_photo: UploadFile = File(...),
     aadhaar_back_photo: UploadFile = File(...),
     passport_photo: UploadFile = File(...),
@@ -77,7 +88,10 @@ def submit_customer_form(
 
     if not customer:
         raise HTTPException(status_code=404, detail="Customer not found.")
-    
+    try:
+        dob = datetime.strptime(dob, "%Y-%m-%d").date()
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD.")
     # Compress images before uploading
     compressed_aadhaar_front = compress_image(aadhaar_front_photo)
     compressed_aadhaar_back = compress_image(aadhaar_back_photo)
@@ -91,8 +105,12 @@ def submit_customer_form(
     # Update customer details
     customer.first_name = first_name
     customer.last_name = last_name
+    customer.dob = dob
+    customer.nominee=nominee
+    customer.relation= relation
     customer.email = email
     customer.address = address
+    customer.pin_code = pin_code
     customer.photo_adhaar_front = aadhaar_front_url
     customer.photo_adhaar_back = aadhaar_back_url
     customer.photo_passport = passport_url
