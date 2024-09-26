@@ -71,7 +71,6 @@ class Customer(database.Base):
     tp_registration = Column(DECIMAL(10, 2))
     man_accessories = Column(DECIMAL(10, 2))
     optional_accessories = Column(DECIMAL(10, 2))
-    onroad_price = Column(DECIMAL(10, 2))
     total_price = Column(DECIMAL(10, 2))
     finance_amount = Column(DECIMAL(10, 2),nullable=True)
     booking = Column(DECIMAL(10,2),nullable=True)
