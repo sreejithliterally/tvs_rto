@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, DateTime, DECIMAL
+from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, DateTime, DECIMAL, Date
 from sqlalchemy.orm import relationship
 from datetime import datetime
 import database
@@ -51,18 +51,30 @@ class Customer(database.Base):
     first_name = Column(String)
     last_name = Column(String)
     phone_number = Column(String)
+    alternate_phone_number = Column(String)
+    dob = Column(Date, nullable=True)
     email = Column(String, nullable=True)
     address = Column(String, nullable=True)
+    pin_code = Column(String, nullable=True)
     photo_adhaar_front = Column(String, nullable=True)
     photo_adhaar_back = Column(String, nullable=True)
     photo_passport = Column(String, nullable=True)
 
+    nominee = Column(String)
+    relation = Column(String)
     vehicle_name = Column(String)
     vehicle_variant = Column(String)
     vehicle_color = Column(String)
     ex_showroom_price = Column(DECIMAL(10, 2))
     tax = Column(DECIMAL(10, 2))
+    insurance = Column(DECIMAL(10, 2))
+    tp_registration = Column(DECIMAL(10, 2))
+    man_accessories = Column(DECIMAL(10, 2))
+    optional_accessories = Column(DECIMAL(10, 2))
     onroad_price = Column(DECIMAL(10, 2))
+    total_price = Column(DECIMAL(10, 2))
+    finance_amount = Column(DECIMAL(10, 2),nullable=True)
+    booking = Column(DECIMAL(10,2),nullable=True)
 
     link_token = Column(String, unique=True, index=True)  # Unique token for the link
     link_expiration = Column(Boolean, default=False)
