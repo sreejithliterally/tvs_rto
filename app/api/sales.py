@@ -151,3 +151,20 @@ def get_customer_count_for_sales_executive(db: Session = Depends(database.get_db
             "total_pending": total_pending_customers,
             "total_submitted": total_submitted_customers
             }
+
+
+@router.get("/customer-verification/count")
+def customer_review_count_sales_executive(db: Session = Depends(database.get_db), current_user: models.User = Depends(oauth2.get_current_user)):
+    if current_user.role_id != 2:
+        raise HTTPException(status_code=403, detail="Not authorized.")
+    
+    review_pending = db.query(models.Customer).filter(models.Customer.branch_id == current_user.branch_id,
+                                                 models.Customer.sales_executive_id== current_user.user_id,
+                                                 models.Customer.sales_verified==False).count()
+    review_done = db.query(models.Customer).filter(models.Customer.branch_id == current_user.branch_id,
+                                                 models.Customer.sales_executive_id== current_user.user_id,
+                                                 models.Customer.sales_verified==True).count()
+    return {
+        "reviews pending":review_pending,
+        "reviews Done":review_done
+    }
