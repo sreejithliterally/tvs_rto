@@ -37,8 +37,8 @@ def create_customer(customer: schemas.CustomerBase, db: Session = Depends(databa
         booking = customer.booking,
         finance_amount = customer.finance_amount,
         sales_executive_id = current_user.user_id,
-        finance_id=customer.finance_id if customer.finance_id else None
-
+        finance_id=customer.finance_id if customer.finance_id else None,
+        status = "pending"
     )
     db.add(new_customer)
     db.commit()
@@ -102,8 +102,7 @@ def get_customers_for_sales_executive(db: Session = Depends(database.get_db), cu
             "vehicle_name": customer.vehicle_name,
             "vehicle_variant": customer.vehicle_variant,
             "ex_showroom_price": customer.ex_showroom_price,
-            "tax": customer.tax,
-            "onroad_price": customer.onroad_price,
+            "tax": customer.tax
         }
         for customer in customers
     ]

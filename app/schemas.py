@@ -35,7 +35,7 @@ class CustomerBase(BaseModel):
     total_price : float
     finance_amount: Optional[float] = None
     finance_id: Optional[int] = None
-
+    
 class CustomerForm(BaseModel):
     photo_adhaar_front: Optional[str] = None  # URL or S3 key for the Aadhaar front photo
     photo_adhaar_back: Optional[str] = None  # URL or S3 key for the Aadhaar back photo
