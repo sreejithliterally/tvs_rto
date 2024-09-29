@@ -159,7 +159,8 @@ def customer_review_count_sales_executive(db: Session = Depends(database.get_db)
     
     review_pending = db.query(models.Customer).filter(models.Customer.branch_id == current_user.branch_id,
                                                  models.Customer.sales_executive_id== current_user.user_id,
-                                                 models.Customer.sales_verified==False).count()
+                                                 models.Customer.sales_verified==False,
+                                                 models.Customer.status=='submitted').count()
     review_done = db.query(models.Customer).filter(models.Customer.branch_id == current_user.branch_id,
                                                  models.Customer.sales_executive_id== current_user.user_id,
                                                  models.Customer.sales_verified==True).count()
