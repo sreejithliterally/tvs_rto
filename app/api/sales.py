@@ -44,7 +44,7 @@ def create_customer(customer: schemas.CustomerBase, db: Session = Depends(databa
     db.commit()
     db.refresh(new_customer)
     
-    customer_link = f"http://localhost:3000/customer-form/{customer_token}"
+    customer_link = f"http://192.168.29.198:3000/customer-form/{customer_token}"
     return {"customer_link": customer_link}
 
 
