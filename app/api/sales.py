@@ -47,6 +47,31 @@ def create_customer(customer: schemas.CustomerBase, db: Session = Depends(databa
     customer_link = f"http://localhost:3000/customer-form/{customer_token}"
     return {"customer_link": customer_link}
 
+
+@router.get("/customers/count")
+def get_customer_count_for_sales_executive(db: Session = Depends(database.get_db), current_user: models.User = Depends(oauth2.get_current_user)):
+    if current_user.role_id != 2:
+        raise HTTPException(status_code=403, detail="Not authorized.")
+    
+    total_customers = db.query(models.Customer).filter(models.Customer.branch_id == current_user.branch_id,
+                                                 models.Customer.sales_executive_id== current_user.user_id).count()
+    
+    total_pending_customers = db.query(models.Customer).filter(models.Customer.branch_id == current_user.branch_id,
+                                                 models.Customer.sales_executive_id== current_user.user_id,
+                                                 models.Customer.status=="pending").count()
+    total_submitted_customers = db.query(models.Customer).filter(models.Customer.branch_id == current_user.branch_id,
+                                                 models.Customer.sales_executive_id== current_user.user_id,
+                                                 models.Customer.status=="submitted").count()
+    
+    
+    
+    return {"total_count":total_customers,
+            "total_pending": total_pending_customers,
+            "total_submitted": total_submitted_customers
+            }
+
+
+
 @router.post("/verify/{customer_id}")
 def verify_customer_sales(customer_id: int, db: Session = Depends(database.get_db), current_user: models.User = Depends(oauth2.get_current_user)):
     # Ensure the user is a sales executive (role_id == 2 for sales executive)
@@ -164,30 +189,6 @@ def update_customer(customer_id: int, update_data: CustomerUpdatesales, db: Sess
 
     return customer
 
-
-
-
-@router.get("/customers/count")
-def get_customer_count_for_sales_executive(db: Session = Depends(database.get_db), current_user: models.User = Depends(oauth2.get_current_user)):
-    if current_user.role_id != 2:
-        raise HTTPException(status_code=403, detail="Not authorized.")
-    
-    total_customers = db.query(models.Customer).filter(models.Customer.branch_id == current_user.branch_id,
-                                                 models.Customer.sales_executive_id== current_user.user_id).count()
-    
-    total_pending_customers = db.query(models.Customer).filter(models.Customer.branch_id == current_user.branch_id,
-                                                 models.Customer.sales_executive_id== current_user.user_id,
-                                                 models.Customer.status=="pending").count()
-    total_submitted_customers = db.query(models.Customer).filter(models.Customer.branch_id == current_user.branch_id,
-                                                 models.Customer.sales_executive_id== current_user.user_id,
-                                                 models.Customer.status=="submitted").count()
-    
-    
-    
-    return {"total_count":total_customers,
-            "total_pending": total_pending_customers,
-            "total_submitted": total_submitted_customers
-            }
 
 
 @router.get("/customer-verification/count")
