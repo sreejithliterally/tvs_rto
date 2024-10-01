@@ -41,7 +41,7 @@ class User(database.Base):
     is_active = Column(Boolean, default=True)
 
     branch = relationship("Branch", back_populates="users")
-
+    chassis_data = relationship("Chassis", back_populates="user")
 
 class Customer(database.Base):
     __tablename__ = "customers"
@@ -129,3 +129,13 @@ class Transaction(database.Base):
     finance_verified = Column(Boolean, default=False)
     rto_submitted = Column(Boolean, default=False)
     transaction_date = Column(DateTime, default=datetime.utcnow)
+
+
+class Chassis(Base):
+    __tablename__ = "chassis"
+
+    id = Column(Integer, primary_key=True, index=True)
+    chassis_number = Column(String, unique=True, nullable=False)
+    chassis_photo_url = Column(String, nullable=False)
+    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    user = relationship("User", back_populates="chassis_data")
