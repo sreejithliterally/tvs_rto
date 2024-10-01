@@ -178,3 +178,10 @@ class BranchResponse(BaseModel):
 
     class Config:
         orm_mode = True
+
+class ChassisResponse(BaseModel):
+    chassis_number: str
+    chassis_photo_url: str
+
+    class Config:
+        orm_mode = True
