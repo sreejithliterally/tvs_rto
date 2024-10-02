@@ -13,30 +13,19 @@ router = APIRouter(
     tags=["Customer"]
     
 )
-
-def compress_image(image_file: UploadFile, max_size_kb: int = 400) -> BytesIO:
-    # Open the image file directly from UploadFile's underlying file object
-    image = Image.open(image_file.file)
-
-    if image.mode in ("RGBA", "P"):  # Convert PNG or other types to RGB
+def compress_image(uploaded_file: UploadFile, quality=85) -> BytesIO:
+    image = Image.open(uploaded_file.file)
+    
+    # Convert the image to RGB if it's not (to ensure compatibility with JPEG)
+    if image.mode in ("RGBA", "P"):
         image = image.convert("RGB")
-
-    # Create a buffer to hold the compressed image
-    buffer = BytesIO()
-    quality = 85  # Start with quality of 85
-
-    # Save the image to the buffer in JPEG format
-    image.save(buffer, format="JPEG", quality=quality)
-    buffer.seek(0)
-
-    # Reduce quality if the image size exceeds max_size_kb
-    while buffer.tell() > max_size_kb * 1024 and quality > 5:  # Avoid reducing quality below 5
-        quality -= 5
-        buffer = BytesIO()  # Clear the buffer
-        image.save(buffer, format="JPEG", quality=quality)
-        buffer.seek(0)
-
-    return buffer
+    
+    # Save the image into a BytesIO object
+    compressed_image = BytesIO()
+    image.save(compressed_image, format='JPEG', quality=quality)
+    compressed_image.seek(0)  # Reset the file pointer to the beginning
+    
+    return compressed_image
 
 
 @router.get("/customer-form/{link_token}")
@@ -67,7 +56,6 @@ def get_customer_data(link_token: str, db: Session = Depends(database.get_db)):
 
     return customer_data
 
-
 @router.post("/{link_token}", response_model=schemas.CustomerResponse)
 def submit_customer_form(
     link_token: str,
@@ -92,6 +80,7 @@ def submit_customer_form(
         dob = datetime.strptime(dob, "%Y-%m-%d").date()
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD.")
+    
     # Compress images before uploading
     compressed_aadhaar_front = compress_image(aadhaar_front_photo)
     compressed_aadhaar_back = compress_image(aadhaar_back_photo)
@@ -106,8 +95,8 @@ def submit_customer_form(
     customer.first_name = first_name
     customer.last_name = last_name
     customer.dob = dob
-    customer.nominee=nominee
-    customer.relation= relation
+    customer.nominee = nominee
+    customer.relation = relation
     customer.email = email
     customer.address = address
     customer.pin_code = pin_code
@@ -118,10 +107,10 @@ def submit_customer_form(
 
     db.commit()
     db.refresh(customer)
-    
+
     # Prepare full name for response
     full_name = f"{first_name} {last_name}"
-    
+
     return schemas.CustomerResponse(
         customer_id=customer.customer_id,
         name=full_name,
