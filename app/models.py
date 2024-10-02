@@ -131,11 +131,12 @@ class Transaction(database.Base):
     transaction_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Chassis(Base):
+class Chassis(database.Base):
     __tablename__ = "chassis"
 
     id = Column(Integer, primary_key=True, index=True)
     chassis_number = Column(String, unique=True, nullable=False)
     chassis_photo_url = Column(String, nullable=False)
-    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    user_id = Column(Integer, ForeignKey('users.user_id'), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
     user = relationship("User", back_populates="chassis_data")

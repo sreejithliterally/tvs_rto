@@ -182,6 +182,7 @@ class BranchResponse(BaseModel):
 class ChassisResponse(BaseModel):
     chassis_number: str
     chassis_photo_url: str
-
+    user_id: int
+    name: str
     class Config:
         orm_mode = True
