@@ -48,10 +48,10 @@ async def upload_chassis_data(
     db.commit()     
     db.refresh(new_chassis)
 
-    return new_chassis
+    return new_chassis  
 
 
-@router.get("image/{chassis_number}", response_model=schemas.ChassisResponse)
+@router.get("image/{chassis_number}")
 def get_chassis_image_link(
     chassis_number: str,
     db: Session = Depends(database.get_db),
@@ -59,10 +59,14 @@ def get_chassis_image_link(
 ):
     # Query the database for the chassis number
     chassis = db.query(models.Chassis).filter(models.Chassis.chassis_number == chassis_number).first()
-    name = current_user.first_name
     # If the chassis number is not found, raise an error
     if not chassis:
         raise HTTPException(status_code=404, detail="Chassis number not found")
-    chassis.name = name
-    # Return the chassis data including the image URL
-    return chassis 
+    response_data = {
+        "chassis_number": chassis.chassis_number,
+        "image_url": chassis.chassis_photo_url,  # Assuming this exists in your Chassis model
+        "name": current_user.first_name  # Add the current user's name to the response
+    }
+
+    # Return the response data
+    return response_data
