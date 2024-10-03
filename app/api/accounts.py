@@ -53,7 +53,7 @@ def get_customers_for_branch(db: Session = Depends(database.get_db), current_use
     
     return customers
 
-# 2. Edit customer data (accounts verification)
+
 @router.put("/customers/{customer_id}", response_model=schemas.CustomerOut)
 def update_customer_accounts(
     customer_id: int,
