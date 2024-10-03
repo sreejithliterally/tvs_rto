@@ -62,7 +62,7 @@ class Customer(database.Base):
 
     nominee = Column(String)
     relation = Column(String)
-    vehicle_name = Column(String)
+    vehicle_name = Column(String)   
     vehicle_variant = Column(String)
     vehicle_color = Column(String)
     ex_showroom_price = Column(DECIMAL(10, 2))
@@ -85,6 +85,7 @@ class Customer(database.Base):
 
     sales_verified = Column(Boolean, default=False)
     accounts_verified = Column(Boolean, default=False)
+    rto_verified = Column(Boolean, default=False)
 
     
     

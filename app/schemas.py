@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, date
 from pydantic import BaseModel, EmailStr
 from typing import Optional
 
@@ -54,7 +54,12 @@ class CustomerOut(BaseModel):
     first_name : Optional[str] = None
     last_name: Optional[str] = None
     address: Optional[str] = None
+    pin_code: Optional[str] = None
     phone_number: str
+    alternate_phone_number: Optional[str] = None
+    dob: Optional[date] = None
+    nominee: Optional[str] = None
+    relation: Optional[str] = None
     status: str
     branch_id: int
     photo_adhaar_front: Optional[str] = None  # URL or S3 key for the Aadhaar front photo
@@ -65,9 +70,9 @@ class CustomerOut(BaseModel):
     vehicle_color: Optional[str] = None
     ex_showroom_price: Optional[float] = None  # Marked as optional
     tax: Optional[float] = None  # Marked as optional
-    onroad_price: Optional[float] = None  # Marked as optional
     sales_verified: bool
     accounts_verified: bool
+    rto_verified: Optional[bool] = None
 
     class Config:
         orm_mode = True
