@@ -61,3 +61,19 @@ def verify_customer_rto(customer_id: int, db: Session = Depends(database.get_db)
 
     return {"message": "Customer rto registration successful"}
 
+
+@router.get("/{customer_id}", response_model=schemas.CustomerOut)
+def get_customer_by_id(customer_id: int, db: Session = Depends(database.get_db), current_user: models.User = Depends(oauth2.get_current_user)):
+    if current_user.role_id != 4:
+
+        raise HTTPException(status_code=403, detail="Not authorized.")
+
+    customer = db.query(models.Customer).filter(
+        models.Customer.customer_id == customer_id 
+    ).first()
+
+    if not customer:
+        raise HTTPException(status_code=404, detail="Customer not found or you are not authorized to view this customer.")
+
+    customer_data = schemas.CustomerOut.from_orm(customer)
+    return customer_data
