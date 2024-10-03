@@ -14,7 +14,7 @@ router = APIRouter(
 )
 
 def is_user_in_rto_role(user: models.User):
-    if user.role_id != 3:  # Assuming role_id 3 is for accounts role
+    if user.role_id != 4:  # Assuming role_id 3 is for accounts role
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You do not have access to this resource"
