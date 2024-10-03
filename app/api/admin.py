@@ -247,6 +247,10 @@ def delete_branch(branch_id: int, db: Session = Depends(database.get_db)):
 
 
 
-
-
-
+@router.get("/total-branch-customers/{branch_id}", response_model=schemas.CustomerListResponse)
+def get_user_by_id(branch_id: int, db: Session = Depends(database.get_db), current_user: models.User = Depends(admin_required)):
+    customers = db.query(models.Customer).filter(models.Customer.branch_id == branch_id).all()
+    
+   
+    customer_data = [schemas.CustomerOut.from_orm(customer) for customer in customers]
+    return schemas.CustomerListResponse(customers=customer_data)
