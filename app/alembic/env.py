@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 from pathlib import Path
 
 # Adjust the path according to your project structure
-env_path = Path("C:/Users/HP/Desktop/tvs_rto/.env")
+env_path = Path("/home/ubuntu/tvs_rto/.env")
 load_dotenv(dotenv_path=env_path)
 
 # Verify if the environment variables are loaded

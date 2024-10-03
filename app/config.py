@@ -20,6 +20,6 @@ class Settings(BaseSettings):
 
 
     class Config:
-        env_file = Path("C:/Users/HP/Desktop/tvs_rto/.env")
+        env_file = Path("/home/ubuntu/tvs_rto/.env")
 
-settings = Settings(_env_file=Path("C:/Users/HP/Desktop/tvs_rto/.env"), _env_file_encoding="utf-8")
+settings = Settings(_env_file=Path("/home/ubuntu/tvs_rto/.env"), _env_file_encoding="utf-8")
