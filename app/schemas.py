@@ -72,6 +72,7 @@ class CustomerOut(BaseModel):
     tax: Optional[float] = None  # Marked as optional
     sales_verified: bool
     accounts_verified: bool
+    rto_verified: Optional[bool] = None
 
     class Config:
         orm_mode = True
