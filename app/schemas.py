@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, date
 from pydantic import BaseModel, EmailStr
 from typing import Optional
 
@@ -57,7 +57,7 @@ class CustomerOut(BaseModel):
     pin_code: Optional[str] = None
     phone_number: str
     alternate_phone_number: Optional[str] = None
-    dob: Optional[str] = None
+    dob: Optional[date] = None
     nominee: Optional[str] = None
     relation: Optional[str] = None
     status: str
