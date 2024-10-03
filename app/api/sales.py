@@ -4,6 +4,8 @@ from sqlalchemy.orm import Session
 from uuid import uuid4
 import models, schemas, database, oauth2
 from schemas import CustomerResponse , CustomerUpdate, CustomerUpdatesales
+from sqlalchemy import func
+from datetime import datetime
 
 router = APIRouter(
     prefix="/sales",
@@ -70,6 +72,25 @@ def get_customer_count_for_sales_executive(db: Session = Depends(database.get_db
             "total_submitted": total_submitted_customers
             }
 
+@router.get("/customers/count_per_day")
+def get_customer_count_per_day(db: Session = Depends(database.get_db), current_user: models.User = Depends(oauth2.get_current_user)):
+    if current_user.role_id != 2:  # Check if the user is a sales executive
+        raise HTTPException(status_code=403, detail="Not authorized.")
+
+    # Query to get count of customers generated per day for the current sales executive
+    customer_count_per_day = (
+        db.query(func.date(models.Customer.created_at), func.count(models.Customer.customer_id))
+        .filter(models.Customer.branch_id == current_user.branch_id,
+                models.Customer.sales_executive_id == current_user.user_id)
+        .group_by(func.date(models.Customer.created_at))  # Group by the date part of created_at
+        .order_by(func.date(models.Customer.created_at))  # Sort by date
+        .all()
+    )
+
+    # Structure the result as a list of dictionaries for easier consumption in the frontend
+    result = [{"date": date.strftime('%Y-%m-%d'), "count": count} for date, count in customer_count_per_day]
+
+    return {"data": result}
 
 
 @router.post("/verify/{customer_id}")
