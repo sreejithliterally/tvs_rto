@@ -1,6 +1,6 @@
 from datetime import datetime, date
 from pydantic import BaseModel, EmailStr
-from typing import Optional
+from typing import Optional, List
 
 class UserCreate(BaseModel):
     first_name: str
@@ -76,6 +76,10 @@ class CustomerOut(BaseModel):
 
     class Config:
         orm_mode = True
+        from_attributes = True
+
+class CustomerListResponse(BaseModel):
+    customers: List[CustomerOut]
 
 class Token(BaseModel):
     access_token: str
