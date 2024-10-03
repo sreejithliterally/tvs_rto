@@ -60,6 +60,61 @@ def get_monthly_customer_registrations(
 
     return customers
 
+@router.get("/sales-verified-customers", response_model=List[schemas.CustomerOut])
+def get_sales_verified_customers_by_branch(branch_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(oauth2.get_current_user)):
+    
+    
+    if current_user.role_id != 1:
+        raise HTTPException(status_code=403, detail="Not authorized.")
+
+    
+    customers = db.query(models.Customer).filter(
+        models.Customer.branch_id == branch_id,
+        models.Customer.sales_verified == True
+    ).all()
+
+    if not customers:
+        raise HTTPException(status_code=404, detail="No sales-verified customers found.")
+
+    return customers
+
+@router.get("/accounts-verified-customers", response_model=List[schemas.CustomerOut])
+def get_accounts_verified_customers_by_branch(branch_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(oauth2.get_current_user)):
+    
+    
+    if current_user.role_id != 1:
+        raise HTTPException(status_code=403, detail="Not authorized.")
+
+    
+    customers = db.query(models.Customer).filter(
+        models.Customer.branch_id == branch_id,
+        models.Customer.accounts_verified == True
+    ).all()
+
+    if not customers:
+        raise HTTPException(status_code=404, detail="No accounts-verified customers found.")
+
+    return customers
+
+@router.get("/rto-verified-customers", response_model=List[schemas.CustomerOut])
+def get_rto_verified_customers_by_branch(branch_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(oauth2.get_current_user)):
+    
+    
+    if current_user.role_id != 1:
+        raise HTTPException(status_code=403, detail="Not authorized.")
+
+    
+    customers = db.query(models.Customer).join(models.VerificationLog).filter(
+        models.Customer.branch_id == branch_id,
+        models.VerificationLog.action == "rto_approved"
+    ).all()
+
+    if not customers:
+        raise HTTPException(status_code=404, detail="No RTO-verified customers found.")
+
+    return customers
+
+
 
 @router.post("/create_user", response_model=schemas.UserOut)
 def create_user(
@@ -74,7 +129,7 @@ def create_user(
     if existing_user:
         raise HTTPException(status_code=400, detail="Username or email already exists")
 
-    # Create new user
+    
     new_user = models.User(
         first_name=user.first_name,
         last_name = user.last_name,
@@ -95,7 +150,7 @@ def create_user(
         "last_name": new_user.last_name,
         "email": new_user.email,
         "branch_id": new_user.branch_id,
-        "role_name": role_name  # Add role_name to the response
+        "role_name": role_name  
     }
     return response
 
@@ -244,6 +299,7 @@ def delete_branch(branch_id: int, db: Session = Depends(database.get_db)):
     db.delete(branch)
     db.commit()
     return {"detail": f"Branch with ID {branch_id} deleted"}
+
 
 
 
