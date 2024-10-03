@@ -1,3 +1,4 @@
+from datetime import date
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -6,6 +7,7 @@ from oauth2 import get_current_user
 from schemas import BranchCreate, BranchResponse, UserCreate
 from utils import hash
 from database import get_db
+from fastapi import Query
 
 router = APIRouter(
     prefix="/admin",
@@ -16,6 +18,48 @@ router = APIRouter(
 def admin_required(current_user: models.User = Depends(get_current_user)):
     if current_user.role_id != 1:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required")
+
+
+@router.get("/customers", response_model=List[schemas.CustomerOut])
+def get_all_customers(db: Session = Depends(database.get_db), current_user: models.User = Depends(oauth2.get_current_user)):
+    if current_user.role_id != 1:
+        raise HTTPException(status_code=403, detail="Not authorized.")
+
+    
+    customers = db.query(models.Customer).all()
+
+    if not customers:
+        raise HTTPException(status_code=404, detail="No customers found.")
+
+    return customers
+
+
+@router.get("/monthly-customers", response_model=List[schemas.CustomerOut])
+def get_monthly_customer_registrations(
+    month: int = Query(..., ge=1, le=12), 
+    year: int = Query(...), 
+    db: Session = Depends(database.get_db), 
+    current_user: models.User = Depends(oauth2.get_current_user)
+):
+
+    if current_user.role_id != 1:
+        raise HTTPException(status_code=403, detail="Not authorized.")
+
+    
+    start_date = date(year, month, 1)
+    if month == 12:
+        end_date = date(year + 1, 1, 1)
+    else:
+        end_date = date(year, month + 1, 1)
+
+    
+    customers = db.query(models.Customer).filter(
+        models.Customer.created_at >= start_date,
+        models.Customer.created_at < end_date
+    ).all()
+
+    return customers
+
 
 @router.post("/create_user", response_model=schemas.UserOut)
 def create_user(
@@ -200,3 +244,9 @@ def delete_branch(branch_id: int, db: Session = Depends(database.get_db)):
     db.delete(branch)
     db.commit()
     return {"detail": f"Branch with ID {branch_id} deleted"}
+
+
+
+
+
+
