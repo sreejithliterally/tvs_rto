@@ -17,7 +17,6 @@ class Branch(database.Base):
     phone_number = Column(String, nullable=False, unique=True)
     branch_manager = Column(String, nullable=False)
 
-
     users = relationship("User", back_populates="branch")
     customers = relationship("Customer", back_populates="branch")
 
@@ -59,7 +58,7 @@ class Customer(database.Base):
     photo_adhaar_front = Column(String, nullable=True)
     photo_adhaar_back = Column(String, nullable=True)
     photo_passport = Column(String, nullable=True)
-
+    customer_sign = Column(String, nullable=True)
     nominee = Column(String)
     relation = Column(String)
     vehicle_name = Column(String)   
