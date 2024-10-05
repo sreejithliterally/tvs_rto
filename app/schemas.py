@@ -64,7 +64,8 @@ class CustomerOut(BaseModel):
     branch_id: int
     photo_adhaar_front: Optional[str] = None  # URL or S3 key for the Aadhaar front photo
     photo_adhaar_back: Optional[str] = None  # URL or S3 key for the Aadhaar back photo
-    photo_passport: Optional[str] = None  # URL or S3 key for the passport photo
+    photo_passport: Optional[str] = None
+    customer_sign: Optional[str] = None  # URL or S3 key for the passport photo
     vehicle_name: Optional[str] = None  # Marked as optional
     vehicle_variant: Optional[str] = None  # Marked as optional
     vehicle_color: Optional[str] = None
