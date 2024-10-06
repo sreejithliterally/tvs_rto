@@ -1,18 +1,19 @@
 from io import BytesIO
-from fastapi import APIRouter, Depends, HTTPException,UploadFile,File, Form
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from typing import List
 from sqlalchemy.orm import Session
 from uuid import uuid4
 import models, schemas, database, oauth2
 import utils
+import uuid
 from PIL import Image
 from datetime import datetime
 
 router = APIRouter(
     prefix="/customer",
     tags=["Customer"]
-    
 )
+
 def compress_image(uploaded_file: UploadFile, quality=85) -> BytesIO:
     image = Image.open(uploaded_file.file)
     
@@ -26,6 +27,12 @@ def compress_image(uploaded_file: UploadFile, quality=85) -> BytesIO:
     compressed_image.seek(0)  # Reset the file pointer to the beginning
     
     return compressed_image
+
+# Function to generate a unique filename
+def generate_unique_filename(original_filename: str) -> str:
+    ext = original_filename.split('.')[-1]  # Get the file extension
+    unique_name = f"{uuid.uuid4()}.{ext}"  # Create a unique filename with the same extension
+    return unique_name
 
 
 @router.get("/customer-form/{link_token}")
@@ -45,13 +52,13 @@ def get_customer_data(link_token: str, db: Session = Depends(database.get_db)):
         "vehicle_color": customer.vehicle_color,
         "ex_showroom_price": customer.ex_showroom_price,
         "tax": customer.tax,
-        "insurance" : customer.insurance,
-        "tp_registration" : customer.tp_registration,
-        "man_accessories" : customer.man_accessories,
-        "optional_accessories" : customer.optional_accessories,
-        "total_price" : customer.total_price,
-        "booking" : customer.booking,
-        "finance_amount" : customer.finance_amount,
+        "insurance": customer.insurance,
+        "tp_registration": customer.tp_registration,
+        "man_accessories": customer.man_accessories,
+        "optional_accessories": customer.optional_accessories,
+        "total_price": customer.total_price,
+        "booking": customer.booking,
+        "finance_amount": customer.finance_amount,
     }
 
     return customer_data
@@ -70,13 +77,13 @@ def submit_customer_form(
     aadhaar_front_photo: UploadFile = File(...),
     aadhaar_back_photo: UploadFile = File(...),
     passport_photo: UploadFile = File(...),
-    customer_sign: UploadFile = File(...),
     db: Session = Depends(database.get_db)
 ):
     customer = db.query(models.Customer).filter(models.Customer.link_token == link_token).first()
 
     if not customer:
         raise HTTPException(status_code=404, detail="Customer not found.")
+    
     try:
         dob = datetime.strptime(dob, "%Y-%m-%d").date()
     except ValueError:
@@ -86,12 +93,16 @@ def submit_customer_form(
     compressed_aadhaar_front = compress_image(aadhaar_front_photo)
     compressed_aadhaar_back = compress_image(aadhaar_back_photo)
     compressed_passport = compress_image(passport_photo)
-    compressed_sign = compress_image(customer_sign)
-    # Upload compressed images to S3
-    aadhaar_front_url = utils.upload_image_to_s3(compressed_aadhaar_front, "hogspot", "aadhaar_front.jpg")
-    aadhaar_back_url = utils.upload_image_to_s3(compressed_aadhaar_back, "hogspot", "aadhaar_back.jpg")
-    passport_url = utils.upload_image_to_s3(compressed_passport, "hogspot", "passport.jpg")
-    customer_sign = utils.upload_image_to_s3(compressed_sign,"hogspot","customer_sign.jpg" )
+
+    # Generate unique filenames for each image
+    aadhaar_front_filename = generate_unique_filename(aadhaar_front_photo.filename)
+    aadhaar_back_filename = generate_unique_filename(aadhaar_back_photo.filename)
+    passport_filename = generate_unique_filename(passport_photo.filename)
+
+    # Upload compressed images to S3 with unique filenames
+    aadhaar_front_url = utils.upload_image_to_s3(compressed_aadhaar_front, "hogspot", aadhaar_front_filename)
+    aadhaar_back_url = utils.upload_image_to_s3(compressed_aadhaar_back, "hogspot", aadhaar_back_filename)
+    passport_url = utils.upload_image_to_s3(compressed_passport, "hogspot", passport_filename)
 
     # Update customer details
     customer.first_name = first_name
@@ -105,7 +116,6 @@ def submit_customer_form(
     customer.photo_adhaar_front = aadhaar_front_url
     customer.photo_adhaar_back = aadhaar_back_url
     customer.photo_passport = passport_url
-    customer.customer_sign = customer_sign
     customer.status = "submitted"
 
     db.commit()
