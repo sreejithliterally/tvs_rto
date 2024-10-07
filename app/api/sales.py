@@ -1,17 +1,120 @@
-from fastapi import APIRouter, Depends, HTTPException
-from typing import List
+from io import BytesIO
+import uuid
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, Form
+from typing import List, Optional
+
 from sqlalchemy.orm import Session
 from uuid import uuid4
-import models, schemas, database, oauth2
+import models, schemas, database, oauth2, utils
 from schemas import CustomerResponse , CustomerUpdate, CustomerUpdatesales
 from sqlalchemy import func
 from datetime import datetime
+from PIL import Image
 
 router = APIRouter(
     prefix="/sales",
     tags=["Sales"],
     dependencies=[Depends(oauth2.get_current_user)]
 )
+
+
+def compress_image(uploaded_file: UploadFile, quality=85) -> BytesIO:
+    image = Image.open(uploaded_file.file)
+    
+    # Convert the image to RGB if it's not (to ensure compatibility with JPEG)
+    if image.mode in ("RGBA", "P"):
+        image = image.convert("RGB")
+    
+    # Save the image into a BytesIO object
+    compressed_image = BytesIO()
+    image.save(compressed_image, format='JPEG', quality=quality)
+    compressed_image.seek(0)  # Reset the file pointer to the beginning
+    
+    return compressed_image
+
+# Function to generate a unique filename
+def generate_unique_filename(original_filename: str) -> str:
+    ext = original_filename.split('.')[-1]  # Get the file extension
+    unique_name = f"{uuid.uuid4()}.{ext}"  # Create a unique filename with the same extension
+    return unique_name
+
+
+@router.put("/customers/{customer_id}", response_model=schemas.CustomerResponse)
+def update_customer(
+    customer_id: int,
+    first_name: Optional[str] = Form(None),
+    last_name: Optional[str] = Form(None),
+    phone_number: Optional[str] = Form(None),
+    address: Optional[str] = Form(None),
+    status: Optional[str] = Form(None),
+    sales_verified: Optional[bool] = Form(None),
+    photo_adhaar_front: Optional[UploadFile] = File(None),
+    photo_adhaar_back: Optional[UploadFile] = File(None),
+    photo_passport: Optional[UploadFile] = File(None),
+    customer_sign: Optional[UploadFile] = File(None),
+    db: Session = Depends(database.get_db)
+):
+    # Fetch the customer from the database
+    customer = db.query(models.Customer).filter(models.Customer.customer_id == customer_id).first()
+    
+    if customer is None:
+        raise HTTPException(status_code=404, detail="Customer not found")
+
+    # Update fields if values are provided
+    if first_name is not None:
+        customer.first_name = first_name
+    if last_name is not None:
+        customer.last_name = last_name
+    if phone_number is not None:
+        customer.phone_number = phone_number
+    if address is not None:
+        customer.address = address
+    if status is not None:
+        customer.status = status
+    if sales_verified is not None:
+        customer.sales_verified = sales_verified
+
+    # Handle file uploads if they are provided
+    if photo_adhaar_front is not None:
+        compressed_aadhaar_front = compress_image(photo_adhaar_front)
+        aadhaar_front_filename = generate_unique_filename(photo_adhaar_front.filename)
+        customer.photo_adhaar_front = utils.upload_image_to_s3(compressed_aadhaar_front, "hogspot", aadhaar_front_filename)
+
+    if photo_adhaar_back is not None:
+        compressed_aadhaar_back = compress_image(photo_adhaar_back)
+        aadhaar_back_filename = generate_unique_filename(photo_adhaar_back.filename)
+        customer.photo_adhaar_back = utils.upload_image_to_s3(compressed_aadhaar_back, "hogspot", aadhaar_back_filename)
+
+    if photo_passport is not None:
+        compressed_passport = compress_image(photo_passport)
+        passport_filename = generate_unique_filename(photo_passport.filename)
+        customer.photo_passport = utils.upload_image_to_s3(compressed_passport, "hogspot", passport_filename)
+
+    if customer_sign is not None:
+        compressed_sign = compress_image(customer_sign)
+        sign_filename = generate_unique_filename(customer_sign.filename)
+        customer.customer_sign = utils.upload_image_to_s3(compressed_sign, "hogspot", sign_filename)
+
+    db.commit()
+    db.refresh(customer)
+
+    # Prepare the response in the expected format
+    full_name = f"{customer.first_name} {customer.last_name}"
+    return schemas.CustomerResponse(
+        customer_id=customer.customer_id,
+        name=full_name,
+        phone_number=customer.phone_number,
+        address=customer.address,
+        email=customer.email,
+        vehicle_name=customer.vehicle_name,
+        vehicle_variant=customer.vehicle_variant,
+        vehicle_color=customer.vehicle_color,
+        sales_verified=customer.sales_verified,
+        accounts_verified=customer.accounts_verified,
+        status=customer.status,
+        created_at=customer.created_at
+    )
+
 
 @router.post("/create-customer")
 def create_customer(customer: schemas.CustomerBase, db: Session = Depends(database.get_db), current_user: models.User = Depends(oauth2.get_current_user)):
@@ -48,6 +151,24 @@ def create_customer(customer: schemas.CustomerBase, db: Session = Depends(databa
     
     customer_link = f"http://192.168.29.198:3000/customer-form/{customer_token}"
     return {"customer_link": customer_link}
+
+
+@router.get("/customer-verification/count")
+def customer_review_count_sales_executive(db: Session = Depends(database.get_db), current_user: models.User = Depends(oauth2.get_current_user)):
+    if current_user.role_id != 2:
+        raise HTTPException(status_code=403, detail="Not authorized.")
+    
+    review_pending = db.query(models.Customer).filter(models.Customer.branch_id == current_user.branch_id,
+                                                 models.Customer.sales_executive_id== current_user.user_id,
+                                                 models.Customer.sales_verified==False,
+                                                 models.Customer.status=='submitted').count()
+    review_done = db.query(models.Customer).filter(models.Customer.branch_id == current_user.branch_id,
+                                                 models.Customer.sales_executive_id== current_user.user_id,
+                                                 models.Customer.sales_verified==True).count()
+    return {
+        "reviews pending":review_pending,
+        "reviews Done":review_done
+    }
 
 
 @router.get("/customers/count")
@@ -195,38 +316,3 @@ def get_customer_by_id(customer_id: int, db: Session = Depends(database.get_db),
 
     return customer_data
 
-@router.put("/customers/{customer_id}", response_model=CustomerResponse)
-def update_customer(customer_id: int, update_data: CustomerUpdatesales, db: Session = Depends(database.get_db)):
-    # Fetch the customer from the database
-    customer = db.query(models.Customer).filter(models.Customer.customer_id == customer_id).first()
-    
-    if customer is None:
-        raise HTTPException(status_code=404, detail="Customer not found")
-
-    # Update the customer fields with the provided data
-    for key, value in update_data.dict(exclude_unset=True).items():
-        setattr(customer, key, value)
-
-    db.commit()
-    db.refresh(customer)
-
-    return customer
-
-
-
-@router.get("/customer-verification/count")
-def customer_review_count_sales_executive(db: Session = Depends(database.get_db), current_user: models.User = Depends(oauth2.get_current_user)):
-    if current_user.role_id != 2:
-        raise HTTPException(status_code=403, detail="Not authorized.")
-    
-    review_pending = db.query(models.Customer).filter(models.Customer.branch_id == current_user.branch_id,
-                                                 models.Customer.sales_executive_id== current_user.user_id,
-                                                 models.Customer.sales_verified==False,
-                                                 models.Customer.status=='submitted').count()
-    review_done = db.query(models.Customer).filter(models.Customer.branch_id == current_user.branch_id,
-                                                 models.Customer.sales_executive_id== current_user.user_id,
-                                                 models.Customer.sales_verified==True).count()
-    return {
-        "reviews pending":review_pending,
-        "reviews Done":review_done
-    }

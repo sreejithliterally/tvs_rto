@@ -77,8 +77,10 @@ def submit_customer_form(
     aadhaar_front_photo: UploadFile = File(...),
     aadhaar_back_photo: UploadFile = File(...),
     passport_photo: UploadFile = File(...),
+    customer_sign: UploadFile = File(...),
     db: Session = Depends(database.get_db)
 ):
+    # Fetch the customer based on the link token
     customer = db.query(models.Customer).filter(models.Customer.link_token == link_token).first()
 
     if not customer:
@@ -93,16 +95,19 @@ def submit_customer_form(
     compressed_aadhaar_front = compress_image(aadhaar_front_photo)
     compressed_aadhaar_back = compress_image(aadhaar_back_photo)
     compressed_passport = compress_image(passport_photo)
+    compressed_signature = compress_image(customer_sign)
 
     # Generate unique filenames for each image
     aadhaar_front_filename = generate_unique_filename(aadhaar_front_photo.filename)
     aadhaar_back_filename = generate_unique_filename(aadhaar_back_photo.filename)
     passport_filename = generate_unique_filename(passport_photo.filename)
+    signature_filename = generate_unique_filename(customer_sign.filename)
 
     # Upload compressed images to S3 with unique filenames
     aadhaar_front_url = utils.upload_image_to_s3(compressed_aadhaar_front, "hogspot", aadhaar_front_filename)
     aadhaar_back_url = utils.upload_image_to_s3(compressed_aadhaar_back, "hogspot", aadhaar_back_filename)
     passport_url = utils.upload_image_to_s3(compressed_passport, "hogspot", passport_filename)
+    signature_url = utils.upload_image_to_s3(compressed_signature, "hogspot", signature_filename)
 
     # Update customer details
     customer.first_name = first_name
@@ -116,6 +121,7 @@ def submit_customer_form(
     customer.photo_adhaar_front = aadhaar_front_url
     customer.photo_adhaar_back = aadhaar_back_url
     customer.photo_passport = passport_url
+    customer.customer_sign = signature_url
     customer.status = "submitted"
 
     db.commit()
