@@ -104,6 +104,7 @@ class CustomerResponse(BaseModel):
     customer_id: int
     name: str
     phone_number: str
+    address: Optional[str] = None
     email: Optional[str]
     vehicle_name: str
     vehicle_variant: str
@@ -119,22 +120,21 @@ class CustomerResponse(BaseModel):
 
 class CustomerUpdatesales(BaseModel):
     name: str
-    first_name : Optional[str] = None
+    first_name: Optional[str] = None
     last_name: Optional[str] = None
     address: Optional[str] = None
     phone_number: str
-    status: str
-    photo_adhaar_front: Optional[str] = None  # URL or S3 key for the Aadhaar front photo
-    photo_adhaar_back: Optional[str] = None  # URL or S3 key for the Aadhaar back photo
-    photo_passport: Optional[str] = None  # URL or S3 key for the passport photo
-    vehicle_name: Optional[str] = None  # Marked as optional
-    vehicle_variant: Optional[str] = None  # Marked as optional
-    vehicle_color: Optional[str] = None
-    ex_showroom_price: Optional[float] = None  # Marked as optional
-    tax: Optional[float] = None  # Marked as optional
-    onroad_price: Optional[float] = None  # Marked as optional
-    sales_verified: Optional[bool]
     status: Optional[str]
+    vehicle_name: Optional[str] = None  
+    vehicle_variant: Optional[str] = None  
+    vehicle_color: Optional[str] = None
+    ex_showroom_price: Optional[float] = None  
+    tax: Optional[float] = None  
+    onroad_price: Optional[float] = None  
+    sales_verified: Optional[bool] = None
+
+    class Config:
+        orm_mode = True
 
 class CustomerUpdate(BaseModel):
     name: str
