@@ -54,8 +54,7 @@ async def upload_chassis_data(
 @router.get("image/{chassis_number}")
 def get_chassis_image_link(
     chassis_number: str,
-    db: Session = Depends(database.get_db),
-    current_user: models.User = Depends(oauth2.get_current_user)
+    db: Session = Depends(database.get_db)
 ):
     # Query the database for the chassis number
     chassis = db.query(models.Chassis).filter(models.Chassis.chassis_number == chassis_number).first()
@@ -65,7 +64,6 @@ def get_chassis_image_link(
     response_data = {
         "chassis_number": chassis.chassis_number,
         "image_url": chassis.chassis_photo_url,  # Assuming this exists in your Chassis model
-        "name": current_user.first_name  # Add the current user's name to the response
     }
 
     # Return the response data
