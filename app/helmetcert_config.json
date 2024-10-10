@@ -4,8 +4,8 @@
         {
           "page": 1,
           "position": {
-            "x": 380,
-            "y": 493
+            "x": 280,
+            "y": 480
           },
           "width": 150,
           "height": 150
@@ -30,50 +30,60 @@
             "key": "customer_name",
             "page": 1,
             "position": {
-                "x": 100,
-                "y": 200
+                "x": 190,
+                "y": 238
             },
-            "font_size": 14,
+            "font_size": 12,
+            "color": [0, 0, 0]
+        },
+        {
+            "key": "customer_name",
+            "page": 1,
+            "position": {
+                "x": 330,
+                "y": 616
+            },
+            "font_size": 12,
             "color": [0, 0, 0]
         },
         {
             "key": "chasis_number",
             "page": 1,
             "position": {
-                "x": 100,
-                "y": 230
+                "x": 378,
+                "y": 262
             },
-            "font_size": 14,
+            "font_size": 12,
             "color": [0, 0, 0]
         },
         {
             "key": "date",
             "page": 1,
             "position": {
-                "x": 100,
-                "y": 290
+                "x": 330,
+                "y": 642
             },
-            "font_size": 14,
+            "font_size": 12,
             "color": [0, 0, 0]
         },
         {
             "key": "dealer_name",
             "page": 1,
             "position": {
-                "x": 100,
-                "y": 280
+                "x": 320,
+                "y": 238
             },
-            "font_size": 14,
+            "font_size": 12,
             "color": [0, 0, 0]
         },
         {
             "key": "manufac",
             "page": 1,
             "position": {
-                "x": 100,
-                "y": 260
+                "x": 250,
+                "y": 262
             },
-            "font_size": 14,
+            "font_size": 12,
             "color": [0, 0, 0]
         }
 

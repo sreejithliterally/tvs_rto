@@ -187,12 +187,12 @@ async def process_pdf_with_text(
     pdf_path = os.path.join(OUTPUT_DIR, f"{pdf_id}_{pdf.filename}")
     signature_path = os.path.join(SIGNATURES_DIR, f"{pdf_id}_{signature.filename}")
     
-    try:
+    try:    
         with open(pdf_path, "wb") as pdf_file:
             pdf_file.write(await pdf.read())
         
         
-        with open(signature_path, "wb") as sig_file:
+        with open(signature_path, "wb") as sig_file:            
             sig_file.write(await signature.read())
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error saving files: {e}")
