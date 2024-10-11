@@ -3,14 +3,17 @@ import os
 
 STAMPS_DIR = "./stamps/"
 SIGNATURES_DIR = "./uploads/signatures/"
+TICK_MARK_IMAGE = "./assets/tick.png"
+CHASSIS_IMAGE_DIR = "./uploads/chassis/"
 
 
 os.makedirs(STAMPS_DIR, exist_ok=True)
 os.makedirs(SIGNATURES_DIR, exist_ok=True)
+os.makedirs(CHASSIS_IMAGE_DIR, exist_ok=True)
 
 
 
-def add_stamps_and_signature(pdf_path, signature_path, output_pdf_path, config, selected_finance, text_inputs):
+def add_stamps_and_signature(pdf_path, signature_path, output_pdf_path, config, selected_finance, text_inputs,chassis_image_path=None):
     # Open the PDF
     doc = fitz.open(pdf_path)
 
@@ -80,7 +83,7 @@ def add_stamps_and_signature(pdf_path, signature_path, output_pdf_path, config, 
         
         page = doc[page_number - 1]
         if "key" in text_item:  # Dynamic text
-            text_to_add = text_inputs.get(text_item["key"], "Default Text")  # Get user input for this key
+            text_to_add = text_inputs.get(text_item["key"], "")  # Get user input for this key
         elif "text" in text_item:  # Static text
             text_to_add = text_item["text"]  # Use predefined static text
 
@@ -95,6 +98,41 @@ def add_stamps_and_signature(pdf_path, signature_path, output_pdf_path, config, 
             fontsize=font_size,
             color=text_color
         )
+
+
+    if chassis_image_path and os.path.exists(chassis_image_path):
+        chassis_config = config.get("chassis_image")
+        if chassis_config:
+            for placement in chassis_config["placements"]:
+                page_number = placement["page"]
+                if page_number - 1 < 0 or page_number - 1 >= len(doc):
+                    raise IndexError(f"Page number {page_number} is out of range for the PDF.")
+                
+                page = doc[page_number - 1]
+                rect = fitz.Rect(
+                    placement["position"]["x"],
+                    placement["position"]["y"],
+                    placement["position"]["x"] + placement["width"],
+                    placement["position"]["y"] + placement["height"]
+                )
+                page.insert_image(rect, filename=chassis_image_path)
+    
+
+    for tick_item in config.get("ticks", []):
+        page_number = tick_item["page"]
+        if page_number - 1 < 0 or page_number - 1 >= len(doc):
+            raise IndexError(f"Page number {page_number} is out of range for the PDF.")
+        
+        page = doc[page_number - 1]
+        rect = fitz.Rect(
+            tick_item["position"]["x"],
+            tick_item["position"]["y"],
+            tick_item["position"]["x"] + tick_item["width"],
+            tick_item["position"]["y"] + tick_item["height"]
+        )
+        # Insert tick mark image
+        page.insert_image(rect, filename=TICK_MARK_IMAGE)
+    
     
     # Save the modified PDF
     doc.save(output_pdf_path)
