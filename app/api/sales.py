@@ -1,6 +1,6 @@
 from io import BytesIO
 import uuid
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, Form
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, Form, status
 from typing import List, Optional
 
 from sqlalchemy.orm import Session
@@ -10,6 +10,7 @@ from schemas import CustomerResponse , CustomerUpdate, CustomerUpdatesales
 from sqlalchemy import func
 from datetime import datetime
 from PIL import Image
+from decimal import Decimal
 
 router = APIRouter(
     prefix="/sales",
@@ -18,10 +19,34 @@ router = APIRouter(
 )
 
 
+def is_user_in_accounts_role(user: models.User):
+    if user.role_id != 2:  
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have access to this resource"
+        )
+
+@router.get("/balances", response_model=List[schemas.CustomerBalanceOut])
+def get_pending_balances(db: Session = Depends(database.get_db), current_user: models.User = Depends(oauth2.get_current_user)):
+    # Ensure the user is a sales executive
+    if current_user.role_id != 2:
+        raise HTTPException(status_code=403, detail="Not authorized.")
+
+    # Query customers with pending balances
+    customers_with_pending_balances = db.query(models.Customer).filter(
+        models.Customer.balance_amount > 0,
+        models.Customer.branch_id == current_user.branch_id
+    ).all()
+
+    if not customers_with_pending_balances:
+        raise HTTPException(status_code=404, detail="No customers with pending balances found.")
+
+    return customers_with_pending_balances
+
 def compress_image(uploaded_file: UploadFile, quality=85) -> BytesIO:
     image = Image.open(uploaded_file.file)
     
-    # Convert the image to RGB if it's not (to ensure compatibility with JPEG)
+    
     if image.mode in ("RGBA", "P"):
         image = image.convert("RGB")
     
@@ -48,6 +73,7 @@ def update_customer(
     address: Optional[str] = Form(None),
     status: Optional[str] = Form(None),
     sales_verified: Optional[bool] = Form(None),
+    amount_paid: Optional[float] = Form(None),  # New field for updating amount_paid
     photo_adhaar_front: Optional[UploadFile] = File(None),
     photo_adhaar_back: Optional[UploadFile] = File(None),
     photo_passport: Optional[UploadFile] = File(None),
@@ -73,6 +99,14 @@ def update_customer(
         customer.status = status
     if sales_verified is not None:
         customer.sales_verified = sales_verified
+    if amount_paid is not None:
+        # Convert amount_paid to Decimal for compatibility
+        amount_paid_decimal = Decimal(str(amount_paid))
+        customer.amount_paid = amount_paid_decimal
+
+        # Calculate the balance considering the finance amount if applicable
+        finance_amount = customer.finance_amount if customer.finance_amount else Decimal("0.0")
+        customer.balance_amount = customer.total_price - finance_amount - amount_paid_decimal
 
     # Handle file uploads if they are provided
     if photo_adhaar_front is not None:
@@ -112,46 +146,61 @@ def update_customer(
         sales_verified=customer.sales_verified,
         accounts_verified=customer.accounts_verified,
         status=customer.status,
-        created_at=customer.created_at
+        created_at=customer.created_at,
+        amount_paid=customer.amount_paid,
+        balance_amount=customer.balance_amount
     )
-
-
 @router.post("/create-customer")
-def create_customer(customer: schemas.CustomerBase, db: Session = Depends(database.get_db), current_user: models.User = Depends(oauth2.get_current_user)):
+def create_customer(
+    customer: schemas.CustomerBase,
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(oauth2.get_current_user)
+):
     if current_user.role_id != 2:
         raise HTTPException(status_code=403, detail="Not authorized.")
     
     customer_token = str(uuid4())
     print(customer_token)
+
+    # Convert inputs to Decimal for accurate calculations
+    total_price = Decimal(customer.total_price)
+    amount_paid = Decimal("0.0")  # Initialize amount_paid to 0
+    finance_amount = Decimal(customer.finance_amount) if customer.finance_amount else Decimal("0.0")
+
+    # Calculate the balance amount considering the finance amount
+    balance_amount = total_price - finance_amount - amount_paid
+
     new_customer = models.Customer(
         name=customer.name,
         phone_number=customer.phone_number,
-        alternate_phone_number = customer.alternate_phone_number,
+        alternate_phone_number=customer.alternate_phone_number,
         link_token=customer_token,
         branch_id=current_user.branch_id,
         vehicle_name=customer.vehicle_name,
         vehicle_variant=customer.vehicle_variant,
         vehicle_color=customer.vehicle_color,
-        ex_showroom_price= customer.ex_showroom_price,
-        tax= customer.tax,
-        insurance = customer.insurance,
-        tp_registration = customer.tp_registration,
-        man_accessories = customer.man_accessories,
-        optional_accessories = customer.optional_accessories,
-        total_price = customer.total_price,
-        booking = customer.booking,
-        finance_amount = customer.finance_amount,
-        sales_executive_id = current_user.user_id,
+        ex_showroom_price=Decimal(customer.ex_showroom_price),
+        tax=Decimal(customer.tax),
+        insurance=Decimal(customer.insurance),
+        tp_registration=Decimal(customer.tp_registration),
+        man_accessories=Decimal(customer.man_accessories),
+        optional_accessories=Decimal(customer.optional_accessories),
+        total_price=total_price,
+        booking=Decimal(customer.booking),
+        finance_amount=finance_amount,
+        sales_executive_id=current_user.user_id,
         finance_id=customer.finance_id if customer.finance_id else None,
-        status = "pending"
+        amount_paid=amount_paid,
+        balance_amount=balance_amount,
+        status="pending"
     )
+    
     db.add(new_customer)
     db.commit()
     db.refresh(new_customer)
     
     customer_link = f"http://192.168.29.198:3000/customer-form/{customer_token}"
     return {"customer_link": customer_link}
-
 
 @router.get("/customer-verification/count")
 def customer_review_count_sales_executive(db: Session = Depends(database.get_db), current_user: models.User = Depends(oauth2.get_current_user)):

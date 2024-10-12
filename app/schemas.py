@@ -33,6 +33,7 @@ class CustomerBase(BaseModel):
     optional_accessories : float
     booking: float
     total_price : float
+    amount_paid: Optional[float] = None 
     finance_amount: Optional[float] = None
     finance_id: Optional[int] = None
     
@@ -113,6 +114,8 @@ class CustomerResponse(BaseModel):
     accounts_verified: bool
     status: str
     created_at: datetime
+    amount_paid: Optional[float] = None  # New field
+    balance_amount: Optional[float] = None  # New field
 
     class Config:
         orm_mode = True
@@ -194,3 +197,15 @@ class ChassisResponse(BaseModel):
     chassis_photo_url: str
     class Config:
         orm_mode = True
+
+class CustomerBalanceOut(BaseModel):
+    customer_id: int
+    name: str
+    phone_number: str
+    total_price: float
+    amount_paid: float
+    balance_amount: float
+    status: str
+
+    class Config:
+        from_attributes = True
