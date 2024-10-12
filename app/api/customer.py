@@ -1,5 +1,7 @@
 from io import BytesIO
+import io
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
+from decimal import Decimal
 from typing import List
 from sqlalchemy.orm import Session
 from uuid import uuid4
@@ -13,6 +15,33 @@ router = APIRouter(
     prefix="/customer",
     tags=["Customer"]
 )
+def combine_images_vertically(image1: UploadFile, image2: UploadFile) -> BytesIO:
+    # Open both images
+    image1 = Image.open(io.BytesIO(image1.file.read()))
+    image2 = Image.open(io.BytesIO(image2.file.read()))
+    
+    # Get the width and height of both images
+    width1, height1 = image1.size
+    width2, height2 = image2.size
+
+    # Create a new image with the width of the wider image and the combined height
+    total_height = height1 + height2
+    max_width = max(width1, width2)
+    
+    # Create a blank image for the combined result
+    combined_image = Image.new("RGB", (max_width, total_height))
+    
+    # Paste the first image at the top and the second image below it
+    combined_image.paste(image1, (0, 0))
+    combined_image.paste(image2, (0, height1))
+    
+    # Save combined image to BytesIO
+    combined_image_bytes = BytesIO()
+    combined_image.save(combined_image_bytes, format='JPEG')
+    combined_image_bytes.seek(0)
+    
+    return combined_image_bytes
+
 
 def compress_image(uploaded_file: UploadFile, quality=85) -> BytesIO:
     image = Image.open(uploaded_file.file)
@@ -63,9 +92,7 @@ def get_customer_data(link_token: str, db: Session = Depends(database.get_db)):
 
     return customer_data
 
-from decimal import Decimal
 
-from decimal import Decimal
 
 @router.post("/{link_token}", response_model=schemas.CustomerResponse)
 def submit_customer_form(
@@ -78,7 +105,6 @@ def submit_customer_form(
     pin_code: str = Form(...),
     nominee: str = Form(...),
     relation: str = Form(...),
-    amount_paid: float = Form(...),  # New field for amount paid
     aadhaar_front_photo: UploadFile = File(...),
     aadhaar_back_photo: UploadFile = File(...),
     passport_photo: UploadFile = File(...),
@@ -96,24 +122,21 @@ def submit_customer_form(
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD.")
     
-    # Convert amount_paid to Decimal
-    amount_paid_decimal = Decimal(str(amount_paid))
     
-    # Compress images before uploading
-    compressed_aadhaar_front = compress_image(aadhaar_front_photo)
-    compressed_aadhaar_back = compress_image(aadhaar_back_photo)
+
+    combined_aadhaar_image = combine_images_vertically(aadhaar_front_photo, aadhaar_back_photo)
+    compressed_combined_aadhaar = compress_image(UploadFile(file=combined_aadhaar_image))
     compressed_passport = compress_image(passport_photo)
     compressed_signature = compress_image(customer_sign)
 
     # Generate unique filenames for each image
-    aadhaar_front_filename = generate_unique_filename(aadhaar_front_photo.filename)
-    aadhaar_back_filename = generate_unique_filename(aadhaar_back_photo.filename)
+    aadhaar_combined_filename = generate_unique_filename("aadhaar_combined.jpg")
+
     passport_filename = generate_unique_filename(passport_photo.filename)
     signature_filename = generate_unique_filename(customer_sign.filename)
 
     # Upload compressed images to S3 with unique filenames
-    aadhaar_front_url = utils.upload_image_to_s3(compressed_aadhaar_front, "hogspot", aadhaar_front_filename)
-    aadhaar_back_url = utils.upload_image_to_s3(compressed_aadhaar_back, "hogspot", aadhaar_back_filename)
+    aadhaar_combined_url = utils.upload_image_to_s3(compressed_combined_aadhaar, "hogspot", aadhaar_combined_filename)
     passport_url = utils.upload_image_to_s3(compressed_passport, "hogspot", passport_filename)
     signature_url = utils.upload_image_to_s3(compressed_signature, "hogspot", signature_filename)
 
@@ -126,15 +149,12 @@ def submit_customer_form(
     customer.email = email
     customer.address = address
     customer.pin_code = pin_code
-    customer.photo_adhaar_front = aadhaar_front_url
-    customer.photo_adhaar_back = aadhaar_back_url
+    customer.photo_adhaar_combined = aadhaar_combined_url
     customer.photo_passport = passport_url
     customer.customer_sign = signature_url
-    customer.amount_paid = amount_paid_decimal  # Set amount_paid properly as Decimal
 
     # Calculate balance_amount considering finance_amount if available
     finance_amount = customer.finance_amount or Decimal("0.0")
-    customer.balance_amount = customer.total_price - amount_paid_decimal - finance_amount
 
     customer.status = "submitted"
 
@@ -156,6 +176,5 @@ def submit_customer_form(
         accounts_verified=customer.accounts_verified,
         status=customer.status,
         created_at=customer.created_at,
-        amount_paid=customer.amount_paid,
         balance_amount=customer.balance_amount
     )

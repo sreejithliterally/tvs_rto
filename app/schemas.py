@@ -60,8 +60,7 @@ class CustomerOut(BaseModel):
     relation: Optional[str] = None
     status: str
     branch_id: int
-    photo_adhaar_front: Optional[str] = None  # URL or S3 key for the Aadhaar front photo
-    photo_adhaar_back: Optional[str] = None  # URL or S3 key for the Aadhaar back photo
+    photo_adhaar_combined: Optional[str] = None  # URL or S3 key for the Aadhaar back photo
     photo_passport: Optional[str] = None
     customer_sign: Optional[str] = None  # URL or S3 key for the passport photo
     vehicle_name: Optional[str] = None  # Marked as optional
@@ -113,7 +112,6 @@ class CustomerResponse(BaseModel):
     accounts_verified: bool
     status: str
     created_at: datetime
-    amount_paid: Optional[float] = None
     balance_amount: Optional[float] = None
     finance_id: Optional[int] = None
     finance_amount: Optional[float] = None

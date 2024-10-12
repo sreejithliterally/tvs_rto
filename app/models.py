@@ -55,8 +55,8 @@ class Customer(database.Base):
     email = Column(String, nullable=True)
     address = Column(String, nullable=True)
     pin_code = Column(String, nullable=True)
-    photo_adhaar_front = Column(String, nullable=True)
-    photo_adhaar_back = Column(String, nullable=True)
+    photo_adhaar_combined = Column(String, nullable=True)
+
     photo_passport = Column(String, nullable=True)
     customer_sign = Column(String, nullable=True)
     nominee = Column(String)
@@ -74,7 +74,7 @@ class Customer(database.Base):
     finance_amount = Column(DECIMAL(10, 2), nullable=True)
     booking = Column(DECIMAL(10, 2), nullable=True)
     amount_paid = Column(DECIMAL(10, 2), nullable=False, default=0)
-    balance_amount = Column(DECIMAL(10, 2), nullable=True)  # New field to track pending balance
+    balance_amount = Column(DECIMAL(10, 2), nullable=True)  
 
     link_token = Column(String, unique=True, index=True)  # Unique token for the link
     link_expiration = Column(Boolean, default=False)
