@@ -173,8 +173,10 @@ def create_customer(
         optional_accessories
     )
 
-    # Initialize amount_paid to 0
-    amount_paid = Decimal("0.0")
+    # Use the amount_paid provided by the sales executive
+    amount_paid = Decimal(customer.amount_paid or "0.0")
+
+    # Calculate the balance amount
     balance_amount = total_price - amount_paid
 
     new_customer = models.Customer(
@@ -206,6 +208,7 @@ def create_customer(
     
     customer_link = f"http://192.168.29.198:3000/customer-form/{customer_token}"
     return {"customer_link": customer_link}
+
 
 
 @router.get("/customer-verification/count")
