@@ -21,20 +21,18 @@ class UserOut(BaseModel):
 class CustomerBase(BaseModel):
     name: str
     phone_number: str
-    alternate_phone_number : str
+    alternate_phone_number: str
     vehicle_name: str
     vehicle_variant: str
     vehicle_color: Optional[str] = None
     ex_showroom_price: float
     tax: float
     insurance: float
-    tp_registration : float
+    tp_registration: float
     man_accessories: float
-    optional_accessories : float
+    optional_accessories: float
     booking: float
-    total_price : float
-    finance_amount: Optional[float] = None
-    finance_id: Optional[int] = None
+    amount_paid: Optional[float] = None
     
 class CustomerForm(BaseModel):
     photo_adhaar_front: Optional[str] = None  # URL or S3 key for the Aadhaar front photo
@@ -74,6 +72,10 @@ class CustomerOut(BaseModel):
     sales_verified: bool
     accounts_verified: bool
     rto_verified: Optional[bool] = None
+    finance_id: Optional[int] = None
+    finance_amount: Optional[float] = None
+    amount_paid: Optional[float] = None
+    balance_amount: Optional[float] = None
 
     class Config:
         orm_mode = True
@@ -98,8 +100,6 @@ class FinanceCreate(BaseModel):
 
 
 
-
-
 class CustomerResponse(BaseModel):
     customer_id: int
     name: str
@@ -113,9 +113,14 @@ class CustomerResponse(BaseModel):
     accounts_verified: bool
     status: str
     created_at: datetime
+    amount_paid: Optional[float] = None
+    balance_amount: Optional[float] = None
+    finance_id: Optional[int] = None
+    finance_amount: Optional[float] = None
 
     class Config:
         orm_mode = True
+        from_attributes = True
 
 
 class CustomerUpdatesales(BaseModel):
@@ -138,22 +143,26 @@ class CustomerUpdatesales(BaseModel):
 
 class CustomerUpdate(BaseModel):
     name: str
-    first_name : Optional[str] = None
+    first_name: Optional[str] = None
     last_name: Optional[str] = None
     address: Optional[str] = None
     phone_number: str
     status: str
-    photo_adhaar_front: Optional[str] = None  # URL or S3 key for the Aadhaar front photo
-    photo_adhaar_back: Optional[str] = None  # URL or S3 key for the Aadhaar back photo
-    photo_passport: Optional[str] = None  # URL or S3 key for the passport photo
-    vehicle_name: Optional[str] = None  # Marked as optional
-    vehicle_variant: Optional[str] = None  # Marked as optional
+    photo_adhaar_front: Optional[str] = None
+    photo_adhaar_back: Optional[str] = None
+    photo_passport: Optional[str] = None
+    vehicle_name: Optional[str] = None
+    vehicle_variant: Optional[str] = None
     vehicle_color: Optional[str] = None
-    ex_showroom_price: Optional[float] = None  # Marked as optional
-    tax: Optional[float] = None  # Marked as optional
-    onroad_price: Optional[float] = None  # Marked as optional
-    accounts_verified: Optional[bool]
-    status: Optional[str]
+    ex_showroom_price: Optional[float] = None
+    tax: Optional[float] = None
+    accounts_verified: Optional[bool] = None
+    status: Optional[str] = None
+    finance_id: Optional[int] = None
+    finance_amount: Optional[float] = None
+
+    class Config:
+        orm_mode = True
 
 
 class BranchCreate(BaseModel):
@@ -194,3 +203,19 @@ class ChassisResponse(BaseModel):
     chassis_photo_url: str
     class Config:
         orm_mode = True
+
+class CustomerFinanceUpdate(BaseModel):
+    finance_id: int
+    finance_amount: float
+
+class CustomerBalanceOut(BaseModel):
+    customer_id: int
+    name: str
+    phone_number: str
+    total_price: float
+    amount_paid: float
+    balance_amount: float
+    status: str
+
+    class Config:
+        from_attributes = True

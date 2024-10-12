@@ -1,6 +1,6 @@
 from io import BytesIO
 import uuid
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, Form
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, Form, status
 from typing import List, Optional
 
 from sqlalchemy.orm import Session
@@ -10,6 +10,7 @@ from schemas import CustomerResponse , CustomerUpdate, CustomerUpdatesales
 from sqlalchemy import func
 from datetime import datetime
 from PIL import Image
+from decimal import Decimal
 
 router = APIRouter(
     prefix="/sales",
@@ -18,24 +19,42 @@ router = APIRouter(
 )
 
 
+def is_user_in_sales_role(user: models.User):
+    if user.role_id != 2:  # Ensure the user is a sales executive
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have access to this resource"
+        )
+
+
+@router.get("/balances", response_model=List[schemas.CustomerBalanceOut])
+def get_pending_balances(db: Session = Depends(database.get_db), current_user: models.User = Depends(oauth2.get_current_user)):
+    is_user_in_sales_role(current_user)
+    
+    customers_with_pending_balances = db.query(models.Customer).filter(
+        models.Customer.balance_amount > 0,
+        models.Customer.branch_id == current_user.branch_id
+    ).all()
+
+    if not customers_with_pending_balances:
+        raise HTTPException(status_code=404, detail="No customers with pending balances found.")
+
+    return customers_with_pending_balances
+
+
 def compress_image(uploaded_file: UploadFile, quality=85) -> BytesIO:
     image = Image.open(uploaded_file.file)
-    
-    # Convert the image to RGB if it's not (to ensure compatibility with JPEG)
     if image.mode in ("RGBA", "P"):
         image = image.convert("RGB")
-    
-    # Save the image into a BytesIO object
     compressed_image = BytesIO()
     image.save(compressed_image, format='JPEG', quality=quality)
-    compressed_image.seek(0)  # Reset the file pointer to the beginning
-    
+    compressed_image.seek(0)
     return compressed_image
 
-# Function to generate a unique filename
+
 def generate_unique_filename(original_filename: str) -> str:
-    ext = original_filename.split('.')[-1]  # Get the file extension
-    unique_name = f"{uuid.uuid4()}.{ext}"  # Create a unique filename with the same extension
+    ext = original_filename.split('.')[-1]
+    unique_name = f"{uuid.uuid4()}.{ext}"
     return unique_name
 
 
@@ -48,15 +67,16 @@ def update_customer(
     address: Optional[str] = Form(None),
     status: Optional[str] = Form(None),
     sales_verified: Optional[bool] = Form(None),
+    amount_paid: Optional[float] = Form(None),
     photo_adhaar_front: Optional[UploadFile] = File(None),
     photo_adhaar_back: Optional[UploadFile] = File(None),
     photo_passport: Optional[UploadFile] = File(None),
     customer_sign: Optional[UploadFile] = File(None),
     db: Session = Depends(database.get_db)
 ):
-    # Fetch the customer from the database
-    customer = db.query(models.Customer).filter(models.Customer.customer_id == customer_id).first()
+    is_user_in_sales_role(oauth2.get_current_user)
     
+    customer = db.query(models.Customer).filter(models.Customer.customer_id == customer_id).first()
     if customer is None:
         raise HTTPException(status_code=404, detail="Customer not found")
 
@@ -73,6 +93,12 @@ def update_customer(
         customer.status = status
     if sales_verified is not None:
         customer.sales_verified = sales_verified
+    if amount_paid is not None:
+        amount_paid_decimal = Decimal(str(amount_paid))
+        customer.amount_paid = amount_paid_decimal
+
+        # Calculate the balance excluding finance amount as it's managed by accounts
+        customer.balance_amount = customer.total_price - amount_paid_decimal
 
     # Handle file uploads if they are provided
     if photo_adhaar_front is not None:
@@ -98,7 +124,6 @@ def update_customer(
     db.commit()
     db.refresh(customer)
 
-    # Prepare the response in the expected format
     full_name = f"{customer.first_name} {customer.last_name}"
     return schemas.CustomerResponse(
         customer_id=customer.customer_id,
@@ -112,39 +137,69 @@ def update_customer(
         sales_verified=customer.sales_verified,
         accounts_verified=customer.accounts_verified,
         status=customer.status,
-        created_at=customer.created_at
+        created_at=customer.created_at,
+        amount_paid=customer.amount_paid,
+        balance_amount=customer.balance_amount
     )
 
 
 @router.post("/create-customer")
-def create_customer(customer: schemas.CustomerBase, db: Session = Depends(database.get_db), current_user: models.User = Depends(oauth2.get_current_user)):
-    if current_user.role_id != 2:
-        raise HTTPException(status_code=403, detail="Not authorized.")
+def create_customer(
+    customer: schemas.CustomerBase,
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(oauth2.get_current_user)
+):
+    is_user_in_sales_role(current_user)
     
     customer_token = str(uuid4())
     print(customer_token)
+
+    # Convert inputs to Decimal for accurate calculations
+    ex_showroom_price = Decimal(customer.ex_showroom_price)
+    tax = Decimal(customer.tax)
+    insurance = Decimal(customer.insurance)
+    tp_registration = Decimal(customer.tp_registration)
+    man_accessories = Decimal(customer.man_accessories)
+    optional_accessories = Decimal(customer.optional_accessories)
+    booking = Decimal(customer.booking)
+
+    # Calculate the total price based on the input fields
+    total_price = (
+        ex_showroom_price +
+        tax +
+        insurance +
+        tp_registration +
+        man_accessories +
+        optional_accessories
+    )
+
+    # Initialize amount_paid to 0
+    amount_paid = Decimal("0.0")
+    balance_amount = total_price - amount_paid
+
     new_customer = models.Customer(
         name=customer.name,
         phone_number=customer.phone_number,
-        alternate_phone_number = customer.alternate_phone_number,
+        alternate_phone_number=customer.alternate_phone_number,
         link_token=customer_token,
         branch_id=current_user.branch_id,
         vehicle_name=customer.vehicle_name,
         vehicle_variant=customer.vehicle_variant,
         vehicle_color=customer.vehicle_color,
-        ex_showroom_price= customer.ex_showroom_price,
-        tax= customer.tax,
-        insurance = customer.insurance,
-        tp_registration = customer.tp_registration,
-        man_accessories = customer.man_accessories,
-        optional_accessories = customer.optional_accessories,
-        total_price = customer.total_price,
-        booking = customer.booking,
-        finance_amount = customer.finance_amount,
-        sales_executive_id = current_user.user_id,
-        finance_id=customer.finance_id if customer.finance_id else None,
-        status = "pending"
+        ex_showroom_price=ex_showroom_price,
+        tax=tax,
+        insurance=insurance,
+        tp_registration=tp_registration,
+        man_accessories=man_accessories,
+        optional_accessories=optional_accessories,
+        total_price=total_price,
+        booking=booking,
+        amount_paid=amount_paid,
+        balance_amount=balance_amount,
+        sales_executive_id=current_user.user_id,
+        status="pending"
     )
+    
     db.add(new_customer)
     db.commit()
     db.refresh(new_customer)

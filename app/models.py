@@ -71,8 +71,10 @@ class Customer(database.Base):
     man_accessories = Column(DECIMAL(10, 2))
     optional_accessories = Column(DECIMAL(10, 2))
     total_price = Column(DECIMAL(10, 2))
-    finance_amount = Column(DECIMAL(10, 2),nullable=True)
-    booking = Column(DECIMAL(10,2),nullable=True)
+    finance_amount = Column(DECIMAL(10, 2), nullable=True)
+    booking = Column(DECIMAL(10, 2), nullable=True)
+    amount_paid = Column(DECIMAL(10, 2), nullable=False, default=0)
+    balance_amount = Column(DECIMAL(10, 2), nullable=True)  # New field to track pending balance
 
     link_token = Column(String, unique=True, index=True)  # Unique token for the link
     link_expiration = Column(Boolean, default=False)
@@ -86,11 +88,7 @@ class Customer(database.Base):
     accounts_verified = Column(Boolean, default=False)
     rto_verified = Column(Boolean, default=False)
 
-    
-    
-
     branch = relationship("Branch", back_populates="customers")
-
 
 class VerificationLog(database.Base):
     __tablename__ = "verification_logs"
