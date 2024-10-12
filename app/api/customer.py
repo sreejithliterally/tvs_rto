@@ -154,7 +154,12 @@ def submit_customer_form(
     customer.customer_sign = signature_url
 
     # Calculate balance_amount considering finance_amount if available
-    finance_amount = customer.finance_amount or Decimal("0.0")
+       # If finance details are not yet added, assume finance_amount is 0
+    finance_amount = customer.finance_amount if customer.finance_amount is not None else Decimal("0.0")
+    amount_paid = customer.amount_paid or Decimal("0.0")
+    
+    # Calculate the balance amount
+    customer.balance_amount = customer.total_price - finance_amount - amount_paid
 
     customer.status = "submitted"
 
