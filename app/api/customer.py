@@ -9,12 +9,50 @@ import models, schemas, database, oauth2
 import utils
 import uuid
 from PIL import Image
+import cv2
+import numpy as np
+
 from datetime import datetime
 
 router = APIRouter(
     prefix="/customer",
     tags=["Customer"]
 )
+
+def remove_background(image: UploadFile) -> BytesIO:
+    # Read the uploaded image as a numpy array using OpenCV
+    file_bytes = np.frombuffer(image.file.read(), np.uint8)
+    img = cv2.imdecode(file_bytes, cv2.IMREAD_GRAYSCALE)
+
+    # Define a threshold for the background
+    thresh = 110
+    
+    # Threshold the image to create a binary image
+    _, img_thresh = cv2.threshold(img, thresh, 255, cv2.THRESH_BINARY)
+
+    # Convert the thresholded image back to PIL Image for further processing
+    img_pil = Image.fromarray(img_thresh).convert("RGBA")
+    
+    # Load the pixel data from the image
+    pixdata = img_pil.load()
+
+    # Get the width and height of the image
+    width, height = img_pil.size
+
+    # Loop over the pixels and make the white pixels transparent
+    for y in range(height):
+        for x in range(width):
+            if pixdata[x, y] == (255, 255, 255, 255):  # White pixel
+                pixdata[x, y] = (255, 255, 255, 0)     # Make transparent
+
+    # Save the modified image to a BytesIO object
+    transparent_image_io = BytesIO()
+    img_pil.save(transparent_image_io, format="PNG")
+    transparent_image_io.seek(0)
+
+    return transparent_image_io
+
+
 def combine_images_vertically(image1: UploadFile, image2: UploadFile) -> BytesIO:
     # Open both images
     image1 = Image.open(io.BytesIO(image1.file.read()))
@@ -43,8 +81,8 @@ def combine_images_vertically(image1: UploadFile, image2: UploadFile) -> BytesIO
     return combined_image_bytes
 
 
-def compress_image(uploaded_file: UploadFile, quality=85) -> BytesIO:
-    image = Image.open(uploaded_file.file)
+def compress_image(file: BytesIO, quality=85) -> BytesIO:
+    image = Image.open(file)  # Now works with BytesIO directly
     
     # Convert the image to RGB if it's not (to ensure compatibility with JPEG)
     if image.mode in ("RGBA", "P"):
@@ -56,6 +94,7 @@ def compress_image(uploaded_file: UploadFile, quality=85) -> BytesIO:
     compressed_image.seek(0)  # Reset the file pointer to the beginning
     
     return compressed_image
+
 
 # Function to generate a unique filename
 def generate_unique_filename(original_filename: str) -> str:
@@ -122,16 +161,23 @@ def submit_customer_form(
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD.")
     
-    
+    # Remove white background from signature
+    transparent_signature = remove_background(customer_sign)
 
+    # Combine Aadhaar front and back photos vertically
     combined_aadhaar_image = combine_images_vertically(aadhaar_front_photo, aadhaar_back_photo)
-    compressed_combined_aadhaar = compress_image(UploadFile(file=combined_aadhaar_image))
-    compressed_passport = compress_image(passport_photo)
-    compressed_signature = compress_image(customer_sign)
+
+    # Convert to BytesIO for compression
+    aadhaar_combined_io = BytesIO(combined_aadhaar_image.read())
+    passport_io = BytesIO(passport_photo.file.read())
+
+    # Compress the images
+    compressed_combined_aadhaar = compress_image(aadhaar_combined_io)
+    compressed_passport = compress_image(passport_io)
+    compressed_signature = compress_image(transparent_signature)
 
     # Generate unique filenames for each image
     aadhaar_combined_filename = generate_unique_filename("aadhaar_combined.jpg")
-
     passport_filename = generate_unique_filename(passport_photo.filename)
     signature_filename = generate_unique_filename(customer_sign.filename)
 
