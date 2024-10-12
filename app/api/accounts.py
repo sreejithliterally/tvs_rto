@@ -18,6 +18,87 @@ def is_user_in_accounts_role(user: models.User):
             detail="You do not have access to this resource"
         )
 
+
+@router.get("/customers/pending", response_model=List[schemas.CustomerOut])  # Use List for multiple results
+def get_pending_customers(
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(oauth2.get_current_user)
+):
+    is_user_in_accounts_role(current_user)
+    
+    # Query to get customers that have not been verified
+    customers = db.query(models.Customer).filter(
+        models.Customer.branch_id == current_user.branch_id,
+        models.Customer.accounts_verified == False
+    ).all()
+    
+    customer_data = [
+        {
+            "customer_id": customer.customer_id,
+            "name": customer.name,
+            "first_name": customer.first_name,
+            "last_name": customer.last_name,
+            "address": customer.address,
+            "phone_number": customer.phone_number,
+            "status": customer.status,
+            "branch_id": customer.branch_id,
+            "photo_adhaar_combined": customer.photo_adhaar_combined,
+            "photo_passport": customer.photo_passport,
+            "customer_sign": customer.customer_sign,
+            "sales_verified": customer.sales_verified,
+            "accounts_verified": customer.accounts_verified,
+            "vehicle_name": customer.vehicle_name,
+            "vehicle_variant": customer.vehicle_variant,
+            "ex_showroom_price": customer.ex_showroom_price,
+            "tax": customer.tax
+        }
+        for customer in customers
+    ]
+    
+    return customer_data
+
+
+
+@router.get("/customers/verified", response_model=List[schemas.CustomerOut])  # Use List for multiple results
+def get_verified_customers(
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(oauth2.get_current_user)
+):
+    is_user_in_accounts_role(current_user)
+    
+    # Query to get customers that have not been verified
+    customers = db.query(models.Customer).filter(
+        models.Customer.branch_id == current_user.branch_id,
+        models.Customer.accounts_verified == True
+    ).all()
+    
+    customer_data = [
+        {
+            "customer_id": customer.customer_id,
+            "name": customer.name,
+            "first_name": customer.first_name,
+            "last_name": customer.last_name,
+            "address": customer.address,
+            "phone_number": customer.phone_number,
+            "status": customer.status,
+            "branch_id": customer.branch_id,
+            "photo_adhaar_combined": customer.photo_adhaar_combined,
+            "photo_passport": customer.photo_passport,
+            "customer_sign": customer.customer_sign,
+            "sales_verified": customer.sales_verified,
+            "accounts_verified": customer.accounts_verified,
+            "vehicle_name": customer.vehicle_name,
+            "vehicle_variant": customer.vehicle_variant,
+            "ex_showroom_price": customer.ex_showroom_price,
+            "tax": customer.tax
+        }
+        for customer in customers
+    ]
+    
+    return customer_data
+
+
+
 @router.get("/customers/{customer_id}", response_model=schemas.CustomerOut)
 def get_customer_by_id(
     customer_id: int,
@@ -35,6 +116,7 @@ def get_customer_by_id(
         raise HTTPException(status_code=404, detail="Customer not found or not authorized to view this customer.")
     
     return customer
+
 
 @router.post("/verify/{customer_id}")
 def verify_customer_by_accounts(customer_id: int, db: Session = Depends(database.get_db), current_user: models.User = Depends(oauth2.get_current_user)):
