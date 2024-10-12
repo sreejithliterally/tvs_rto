@@ -19,20 +19,18 @@ router = APIRouter(
 )
 
 
-def is_user_in_accounts_role(user: models.User):
-    if user.role_id != 2:  
+def is_user_in_sales_role(user: models.User):
+    if user.role_id != 2:  # Ensure the user is a sales executive
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You do not have access to this resource"
         )
 
+
 @router.get("/balances", response_model=List[schemas.CustomerBalanceOut])
 def get_pending_balances(db: Session = Depends(database.get_db), current_user: models.User = Depends(oauth2.get_current_user)):
-    # Ensure the user is a sales executive
-    if current_user.role_id != 2:
-        raise HTTPException(status_code=403, detail="Not authorized.")
-
-    # Query customers with pending balances
+    is_user_in_sales_role(current_user)
+    
     customers_with_pending_balances = db.query(models.Customer).filter(
         models.Customer.balance_amount > 0,
         models.Customer.branch_id == current_user.branch_id
@@ -43,24 +41,20 @@ def get_pending_balances(db: Session = Depends(database.get_db), current_user: m
 
     return customers_with_pending_balances
 
+
 def compress_image(uploaded_file: UploadFile, quality=85) -> BytesIO:
     image = Image.open(uploaded_file.file)
-    
-    
     if image.mode in ("RGBA", "P"):
         image = image.convert("RGB")
-    
-    # Save the image into a BytesIO object
     compressed_image = BytesIO()
     image.save(compressed_image, format='JPEG', quality=quality)
-    compressed_image.seek(0)  # Reset the file pointer to the beginning
-    
+    compressed_image.seek(0)
     return compressed_image
 
-# Function to generate a unique filename
+
 def generate_unique_filename(original_filename: str) -> str:
-    ext = original_filename.split('.')[-1]  # Get the file extension
-    unique_name = f"{uuid.uuid4()}.{ext}"  # Create a unique filename with the same extension
+    ext = original_filename.split('.')[-1]
+    unique_name = f"{uuid.uuid4()}.{ext}"
     return unique_name
 
 
@@ -73,16 +67,16 @@ def update_customer(
     address: Optional[str] = Form(None),
     status: Optional[str] = Form(None),
     sales_verified: Optional[bool] = Form(None),
-    amount_paid: Optional[float] = Form(None),  # New field for updating amount_paid
+    amount_paid: Optional[float] = Form(None),
     photo_adhaar_front: Optional[UploadFile] = File(None),
     photo_adhaar_back: Optional[UploadFile] = File(None),
     photo_passport: Optional[UploadFile] = File(None),
     customer_sign: Optional[UploadFile] = File(None),
     db: Session = Depends(database.get_db)
 ):
-    # Fetch the customer from the database
-    customer = db.query(models.Customer).filter(models.Customer.customer_id == customer_id).first()
+    is_user_in_sales_role(oauth2.get_current_user)
     
+    customer = db.query(models.Customer).filter(models.Customer.customer_id == customer_id).first()
     if customer is None:
         raise HTTPException(status_code=404, detail="Customer not found")
 
@@ -100,13 +94,11 @@ def update_customer(
     if sales_verified is not None:
         customer.sales_verified = sales_verified
     if amount_paid is not None:
-        # Convert amount_paid to Decimal for compatibility
         amount_paid_decimal = Decimal(str(amount_paid))
         customer.amount_paid = amount_paid_decimal
 
-        # Calculate the balance considering the finance amount if applicable
-        finance_amount = customer.finance_amount if customer.finance_amount else Decimal("0.0")
-        customer.balance_amount = customer.total_price - finance_amount - amount_paid_decimal
+        # Calculate the balance excluding finance amount as it's managed by accounts
+        customer.balance_amount = customer.total_price - amount_paid_decimal
 
     # Handle file uploads if they are provided
     if photo_adhaar_front is not None:
@@ -132,7 +124,6 @@ def update_customer(
     db.commit()
     db.refresh(customer)
 
-    # Prepare the response in the expected format
     full_name = f"{customer.first_name} {customer.last_name}"
     return schemas.CustomerResponse(
         customer_id=customer.customer_id,
@@ -150,25 +141,41 @@ def update_customer(
         amount_paid=customer.amount_paid,
         balance_amount=customer.balance_amount
     )
+
+
 @router.post("/create-customer")
 def create_customer(
     customer: schemas.CustomerBase,
     db: Session = Depends(database.get_db),
     current_user: models.User = Depends(oauth2.get_current_user)
 ):
-    if current_user.role_id != 2:
-        raise HTTPException(status_code=403, detail="Not authorized.")
+    is_user_in_sales_role(current_user)
     
     customer_token = str(uuid4())
     print(customer_token)
 
     # Convert inputs to Decimal for accurate calculations
-    total_price = Decimal(customer.total_price)
-    amount_paid = Decimal("0.0")  # Initialize amount_paid to 0
-    finance_amount = Decimal(customer.finance_amount) if customer.finance_amount else Decimal("0.0")
+    ex_showroom_price = Decimal(customer.ex_showroom_price)
+    tax = Decimal(customer.tax)
+    insurance = Decimal(customer.insurance)
+    tp_registration = Decimal(customer.tp_registration)
+    man_accessories = Decimal(customer.man_accessories)
+    optional_accessories = Decimal(customer.optional_accessories)
+    booking = Decimal(customer.booking)
 
-    # Calculate the balance amount considering the finance amount
-    balance_amount = total_price - finance_amount - amount_paid
+    # Calculate the total price based on the input fields
+    total_price = (
+        ex_showroom_price +
+        tax +
+        insurance +
+        tp_registration +
+        man_accessories +
+        optional_accessories
+    )
+
+    # Initialize amount_paid to 0
+    amount_paid = Decimal("0.0")
+    balance_amount = total_price - amount_paid
 
     new_customer = models.Customer(
         name=customer.name,
@@ -179,19 +186,17 @@ def create_customer(
         vehicle_name=customer.vehicle_name,
         vehicle_variant=customer.vehicle_variant,
         vehicle_color=customer.vehicle_color,
-        ex_showroom_price=Decimal(customer.ex_showroom_price),
-        tax=Decimal(customer.tax),
-        insurance=Decimal(customer.insurance),
-        tp_registration=Decimal(customer.tp_registration),
-        man_accessories=Decimal(customer.man_accessories),
-        optional_accessories=Decimal(customer.optional_accessories),
+        ex_showroom_price=ex_showroom_price,
+        tax=tax,
+        insurance=insurance,
+        tp_registration=tp_registration,
+        man_accessories=man_accessories,
+        optional_accessories=optional_accessories,
         total_price=total_price,
-        booking=Decimal(customer.booking),
-        finance_amount=finance_amount,
-        sales_executive_id=current_user.user_id,
-        finance_id=customer.finance_id if customer.finance_id else None,
+        booking=booking,
         amount_paid=amount_paid,
         balance_amount=balance_amount,
+        sales_executive_id=current_user.user_id,
         status="pending"
     )
     
@@ -201,6 +206,7 @@ def create_customer(
     
     customer_link = f"http://192.168.29.198:3000/customer-form/{customer_token}"
     return {"customer_link": customer_link}
+
 
 @router.get("/customer-verification/count")
 def customer_review_count_sales_executive(db: Session = Depends(database.get_db), current_user: models.User = Depends(oauth2.get_current_user)):

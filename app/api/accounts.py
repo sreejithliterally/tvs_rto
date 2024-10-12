@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
+from decimal import Decimal
 import models, database, oauth2, schemas
 
 router = APIRouter(
@@ -25,7 +26,6 @@ def get_customer_by_id(
 ):
     is_user_in_accounts_role(current_user)
     
-    # Fetch the customer by ID and ensure they belong to the same branch as the logged-in accounts person
     customer = db.query(models.Customer).filter(
         models.Customer.customer_id == customer_id,
         models.Customer.branch_id == current_user.branch_id
@@ -38,12 +38,19 @@ def get_customer_by_id(
 
 @router.post("/verify/{customer_id}")
 def verify_customer_by_accounts(customer_id: int, db: Session = Depends(database.get_db), current_user: models.User = Depends(oauth2.get_current_user)):
-    if current_user.role_id != 3:  
-        raise HTTPException(status_code=403, detail="Not authorized.")
+    is_user_in_accounts_role(current_user)
     
-    customer = db.query(models.Customer).filter(models.Customer.customer_id == customer_id).first()
+    customer = db.query(models.Customer).filter(
+        models.Customer.customer_id == customer_id
+    ).first()
+
     if not customer:
         raise HTTPException(status_code=404, detail="Customer not found.")
+    
+    # Check if finance is approved and update the balance amount accordingly
+    if customer.finance_amount and customer.finance_amount > 0:
+        balance_amount = customer.total_price - customer.amount_paid - customer.finance_amount
+        customer.balance_amount = balance_amount
     
     customer.accounts_verified = True
     verification_log = models.VerificationLog(
@@ -55,30 +62,18 @@ def verify_customer_by_accounts(customer_id: int, db: Session = Depends(database
     db.add(verification_log)
     db.commit()
 
-    return {"message": "Accounts verification completed."}
+    return {"message": "Accounts verification completed and balance amount updated based on finance approval."}
 
-@router.get("/customers", response_model=List[schemas.CustomerOut])
-def get_customers_for_branch(db: Session = Depends(database.get_db), current_user: models.User = Depends(oauth2.get_current_user)):
-    is_user_in_accounts_role(current_user)
-    
-    # Fetch customers only from the user's branch where sales are verified
-    customers = db.query(models.Customer).filter(
-        models.Customer.branch_id == current_user.branch_id,
-        models.Customer.sales_verified == True
-    ).all()
-    
-    return customers
-
-@router.put("/customers/{customer_id}", response_model=schemas.CustomerOut)
-def update_customer_accounts(
+@router.put("/customers/{customer_id}/finance", response_model=schemas.CustomerOut)
+def update_finance_details(
     customer_id: int,
-    customer_update: schemas.CustomerUpdate,
+    finance_id: Optional[int],
+    finance_amount: Optional[float],
     db: Session = Depends(database.get_db),
     current_user: models.User = Depends(oauth2.get_current_user)
 ):
     is_user_in_accounts_role(current_user)
     
-    # Find the customer in the user's branch
     customer = db.query(models.Customer).filter(
         models.Customer.customer_id == customer_id,
         models.Customer.branch_id == current_user.branch_id
@@ -86,14 +81,19 @@ def update_customer_accounts(
     
     if not customer:
         raise HTTPException(status_code=404, detail="Customer not found")
-    
-    if customer_update.accounts_verified is not None:
-        customer.accounts_verified = customer_update.accounts_verified
-    
-    if customer_update.status is not None:
-        customer.status = customer_update.status
+
+    if finance_id is not None:
+        customer.finance_id = finance_id
+
+    if finance_amount is not None:
+        finance_amount_decimal = Decimal(str(finance_amount))
+        customer.finance_amount = finance_amount_decimal
+
+        # Update balance amount based on finance
+        customer.balance_amount = customer.total_price - customer.amount_paid - finance_amount_decimal
     
     db.commit()
     db.refresh(customer)
     
     return customer
+
