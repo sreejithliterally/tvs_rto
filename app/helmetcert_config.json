@@ -1,0 +1,91 @@
+{
+    "signature": {
+      "placements": [
+        {
+          "page": 1,
+          "position": {
+            "x": 280,
+            "y": 480
+          },
+          "width": 150,
+          "height": 150
+        }
+      ]
+    },
+
+    "texts": [
+
+        {
+            "text": "Top Haven Motors",  
+            "page": 1,
+            "position": {
+              "x": 100,
+              "y": 320
+            },
+            "font_size": 8,
+            "color": [0, 0, 0]
+          },
+
+        {
+            "key": "customer_name",
+            "page": 1,
+            "position": {
+                "x": 190,
+                "y": 238
+            },
+            "font_size": 12,
+            "color": [0, 0, 0]
+        },
+        {
+            "key": "customer_name",
+            "page": 1,
+            "position": {
+                "x": 330,
+                "y": 616
+            },
+            "font_size": 12,
+            "color": [0, 0, 0]
+        },
+        {
+            "key": "chasis_number",
+            "page": 1,
+            "position": {
+                "x": 378,
+                "y": 262
+            },
+            "font_size": 12,
+            "color": [0, 0, 0]
+        },
+        {
+            "key": "date",
+            "page": 1,
+            "position": {
+                "x": 330,
+                "y": 642
+            },
+            "font_size": 12,
+            "color": [0, 0, 0]
+        },
+        {
+            "key": "dealer_name",
+            "page": 1,
+            "position": {
+                "x": 320,
+                "y": 238
+            },
+            "font_size": 12,
+            "color": [0, 0, 0]
+        },
+        {
+            "key": "manufac",
+            "page": 1,
+            "position": {
+                "x": 250,
+                "y": 262
+            },
+            "font_size": 12,
+            "color": [0, 0, 0]
+        }
+
+    ]
+}

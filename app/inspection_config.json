@@ -1,0 +1,194 @@
+{
+    "stamps": [
+      {
+        "name": "dealerstamp.png",
+        "placements": [
+          {
+            "page": 1,
+            "position": {
+              "x": 450,
+              "y": 660
+            },
+            "width": 100,
+            "height": 100
+          }
+        ]
+      }
+    ],
+    
+    "texts": [
+        {
+            "key": "sale_invoice_no",  
+            "page": 1,
+            "position": {
+                "x": 280,
+                "y": 409
+            },
+            "font_size": 12,
+            "color": [0, 0, 0]
+        },
+    
+        {
+            "key": "date",  
+            "page": 1,
+            "position": {
+                "x": 280,
+                "y": 457
+            },
+            "font_size": 12,
+            "color": [0, 0, 0]
+        }
+    ],
+    
+    "ticks": [
+        {
+            "page": 1,
+            "position": {
+                "x": 450,
+                "y": 162
+            },
+            "width": 15,
+            "height": 15
+        },
+        {
+            "page": 1,
+            "position": {
+                "x": 450,
+                "y": 182
+            },
+            "width": 15,
+            "height": 15
+        },
+        {
+            "page": 1,
+            "position": {
+                "x": 450,
+                "y": 252
+            },
+            "width": 15,
+            "height": 15
+        },
+        {
+            "page": 1,
+            "position": {
+                "x": 450,
+                "y": 302
+            },
+            "width": 15,
+            "height": 15
+        },
+        {
+            "page": 1,
+            "position": {
+                "x": 450,
+                "y": 322
+            },
+            "width": 15,
+            "height": 15
+        },
+        {
+            "page": 1,
+            "position": {
+                "x": 450,
+                "y": 350
+            },
+            "width": 15,
+            "height": 15
+        },
+        {
+            "page": 1,
+            "position": {
+                "x": 450,
+                "y": 376
+            },
+            "width": 15,
+            "height": 15
+        },
+        {
+            "page": 1,
+            "position": {
+                "x": 450,
+                "y": 404
+            },
+            "width": 15,
+            "height": 15
+        },
+        {
+            "page": 1,
+            "position": {
+                "x": 450,
+                "y": 427
+            },
+            "width": 15,
+            "height": 15
+        },
+        {
+            "page": 1,
+            "position": {
+                "x": 450,
+                "y": 451
+            },
+            "width": 15,
+            "height": 15
+        },
+        {
+            "page": 1,
+            "position": {
+                "x": 450,
+                "y": 472
+            },
+            "width": 15,
+            "height": 15
+        },
+        {
+            "page": 1,
+            "position": {
+                "x": 450,
+                "y": 500
+            },
+            "width": 15,
+            "height": 15
+        },
+        {
+            "page": 1,
+            "position": {
+                "x": 450,
+                "y": 521
+            },
+            "width": 15,
+            "height": 15
+        },
+        {
+            "page": 1,
+            "position": {
+                "x": 450,
+                "y": 557
+            },
+            "width": 15,
+            "height": 15
+        },
+        {
+            "page": 1,
+            "position": {
+                "x": 450,
+                "y": 581
+            },
+            "width": 15,
+            "height": 15
+        }
+    ],
+
+    "chassis_image": {
+    "placements": [
+        {
+            "page": 1,
+            "position": {"x": 480, "y": 300},
+            "width": 150,
+            "height": 100
+        }
+    ]
+}
+}
+
+
+
