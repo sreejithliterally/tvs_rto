@@ -64,21 +64,14 @@ def verify_customer_rto(customer_id: int, db: Session = Depends(database.get_db)
     return {"message": "Customer RTO registration successful"}
 
 
-@router.put("/customers/{customer_id}", response_model=schemas.CustomerResponse)
+@router.put("/customers/{customer_id}", response_model=schemas.CustomerEditedResponse)
 def update_customer(
     customer_id: int,
     first_name: Optional[str] = Form(None),
     last_name: Optional[str] = Form(None),
     phone_number: Optional[str] = Form(None),
     address: Optional[str] = Form(None),
-    status: Optional[str] = Form(None),
     vehicle_number: Optional[str] = Form(None),
-    rto_comments: Optional[str] = Form(None),
-    photo_adhaar_front: Optional[UploadFile] = File(None),
-    photo_adhaar_back: Optional[UploadFile] = File(None),
-    photo_passport: Optional[UploadFile] = File(None),
-    customer_sign: Optional[UploadFile] = File(None),
-
     db: Session = Depends(database.get_db),
     current_user: models.User = Depends(oauth2.get_current_user)
 ):
@@ -99,60 +92,15 @@ def update_customer(
         customer.phone_number = phone_number
     if address is not None:
         customer.address = address
-    if status is not None:
-        customer.status = status
+
     if vehicle_number is not None:
         customer.vehicle_number = vehicle_number
-    if rto_comments is not None:
-        customer.rto_comments = rto_comments
-
-    # Handle file uploads if they are provided
-    if photo_adhaar_front is not None:
-        compressed_aadhaar_front = compress_image(photo_adhaar_front)
-        aadhaar_front_filename = generate_unique_filename(photo_adhaar_front.filename)
-        customer.photo_adhaar_front = utils.upload_image_to_s3(compressed_aadhaar_front, "hogspot", aadhaar_front_filename)
-
-    if photo_adhaar_back is not None:
-        compressed_aadhaar_back = compress_image(photo_adhaar_back)
-        aadhaar_back_filename = generate_unique_filename(photo_adhaar_back.filename)
-        customer.photo_adhaar_back = utils.upload_image_to_s3(compressed_aadhaar_back, "hogspot", aadhaar_back_filename)
-
-    if photo_passport is not None:
-        compressed_passport = compress_image(photo_passport)
-        passport_filename = generate_unique_filename(photo_passport.filename)
-        customer.photo_passport = utils.upload_image_to_s3(compressed_passport, "hogspot", passport_filename)
-
-    if customer_sign is not None:
-        compressed_sign = compress_image(customer_sign)
-        sign_filename = generate_unique_filename(customer_sign.filename)
-        customer.customer_sign = utils.upload_image_to_s3(compressed_sign, "hogspot", sign_filename)
-
-    
-    if vehicle_number:
-        customer.rto_verified = True
+        customer.registered = True
 
     db.commit()
     db.refresh(customer)
 
-    full_name = f"{customer.first_name} {customer.last_name}"
-    return schemas.CustomerResponse(
-        customer_id=customer.customer_id,
-        name=full_name,
-        phone_number=customer.phone_number,
-        address=customer.address,
-        email=customer.email,
-        vehicle_name=customer.vehicle_name,
-        vehicle_variant=customer.vehicle_variant,
-        vehicle_color=customer.vehicle_color,
-        sales_verified=customer.sales_verified,
-        accounts_verified=customer.accounts_verified,
-        rto_verified=customer.rto_verified,
-        status=customer.status,
-        created_at=customer.created_at,
-        amount_paid=customer.amount_paid,
-        balance_amount=customer.balance_amount
-    )
-
+    return customer
 
 
 

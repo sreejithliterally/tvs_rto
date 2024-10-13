@@ -86,11 +86,11 @@ class Customer(database.Base):
     branch_id = Column(Integer, ForeignKey('branches.branch_id'))
     sales_executive_id = Column(Integer, ForeignKey('users.user_id'))
     finance_id = Column(Integer, ForeignKey('finance_options.finance_id'), nullable=True)
-
+    
     sales_verified = Column(Boolean, default=False)
     accounts_verified = Column(Boolean, default=False)
     rto_verified = Column(Boolean, default=False)
-
+    registered = Column(Boolean, nullable=True, default=False)
     branch = relationship("Branch", back_populates="customers")
 
 class VerificationLog(database.Base):

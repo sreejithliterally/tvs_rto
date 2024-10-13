@@ -75,6 +75,11 @@ class CustomerOut(BaseModel):
     finance_amount: Optional[float] = None
     amount_paid: Optional[float] = None
     balance_amount: Optional[float] = None
+    registered: Optional[bool] = None
+    vehicle_number: Optional[str] = None
+    number_plate_front: Optional[str] = None
+    number_plate_back: Optional[str] = None
+    delivery_photo: Optional[str] = None
 
     class Config:
         orm_mode = True
@@ -96,6 +101,16 @@ class TokenData(BaseModel):
 class FinanceCreate(BaseModel):
     company_name:str
     details: Optional[str]
+
+class CustomerEditedResponse(BaseModel):
+    customer_id: int
+    name: str
+    phone_number: str
+    address: Optional[str] = None
+    email: Optional[str]
+    vehicle_color: Optional[str] = None
+    balance_amount: Optional[float] = None
+
 
 
 

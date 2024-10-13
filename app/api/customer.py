@@ -87,7 +87,7 @@ def compress_image(file: BytesIO, quality=85) -> BytesIO:
     # Convert the image to RGB if it's not (to ensure compatibility with JPEG)
     if image.mode in ("RGBA", "P"):
         image = image.convert("RGB")
-    
+        
     # Save the image into a BytesIO object
     compressed_image = BytesIO()
     image.save(compressed_image, format='JPEG', quality=quality)

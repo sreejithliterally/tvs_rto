@@ -2,6 +2,7 @@ from io import BytesIO
 import uuid
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, Form, status
 from typing import List, Optional
+import utils
 
 from sqlalchemy.orm import Session
 from uuid import uuid4
@@ -11,6 +12,7 @@ from sqlalchemy import func
 from datetime import datetime
 from PIL import Image
 from decimal import Decimal
+
 
 router = APIRouter(
     prefix="/sales",
@@ -25,7 +27,10 @@ def is_user_in_sales_role(user: models.User):
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You do not have access to this resource"
         )
-
+def generate_unique_filename(original_filename: str) -> str:
+    ext = original_filename.split('.')[-1]  # Get the file extension
+    unique_name = f"{uuid.uuid4()}.{ext}"  # Create a unique filename with the same extension
+    return unique_name
 
 @router.get("/balances", response_model=List[schemas.CustomerBalanceOut])
 def get_pending_balances(db: Session = Depends(database.get_db), current_user: models.User = Depends(oauth2.get_current_user)):
@@ -56,6 +61,44 @@ def generate_unique_filename(original_filename: str) -> str:
     ext = original_filename.split('.')[-1]
     unique_name = f"{uuid.uuid4()}.{ext}"
     return unique_name
+
+
+@router.post("/customers/delivery-update/{customer_id}", response_model=schemas.CustomerResponse)
+async def update_customer(
+    customer_id: int,
+    number_plate_front: UploadFile = File(...),
+    number_plate_back: UploadFile = File(...),
+    delivery_photo: UploadFile = File(...),
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(oauth2.get_current_user)
+):
+    is_user_in_sales_role(current_user)
+
+    customer = db.query(models.Customer).filter(models.Customer.customer_id == customer_id).first()
+    if customer is None:
+        raise HTTPException(status_code=404, detail="Customer not found")
+
+    number_plate_front_filename = generate_unique_filename(number_plate_front.filename)
+    number_plate_back_filename = generate_unique_filename(number_plate_back.filename)
+    delivery_photo_filename = generate_unique_filename(delivery_photo.filename)
+
+    # Read the contents of UploadFile and wrap it in BytesIO
+    number_plate_front_bytes = BytesIO(await number_plate_front.read())
+    number_plate_back_bytes = BytesIO(await number_plate_back.read())
+    delivery_photo_bytes = BytesIO(await delivery_photo.read())
+
+    # Call your upload function with the BytesIO objects
+    number_plate_front_url = utils.upload_image_to_s3(number_plate_front_bytes, "hogspot", number_plate_front_filename)
+    number_plate_back_url = utils.upload_image_to_s3(number_plate_back_bytes, "hogspot", number_plate_back_filename)
+    delivery_photo_url = utils.upload_image_to_s3(delivery_photo_bytes, "hogspot", delivery_photo_filename)
+
+    customer.number_plate_front = number_plate_front_url
+    customer.number_plate_back = number_plate_back_url
+    customer.delivery_photo = delivery_photo_url
+
+    db.commit()
+    db.refresh(customer)
+    return customer
 
 
 @router.put("/customers/{customer_id}", response_model=schemas.CustomerResponse)
@@ -309,29 +352,7 @@ def get_customers_for_sales_executive(db: Session = Depends(database.get_db), cu
                                                  models.Customer.sales_executive_id== current_user.user_id).all()
 
     #will return the customers' data relevant to the sales executive
-    customer_data = [
-        {
-            "customer_id": customer.customer_id,
-            "name": customer.name,
-            "first_name": customer.first_name,
-            "last_name": customer.last_name,
-            "address": customer.address,
-            "phone_number": customer.phone_number,
-            "status": customer.status,
-            "branch_id": customer.branch_id,
-            "photo_adhaar_combined":customer.photo_adhaar_combined,
-            "photo_passport":customer.photo_passport,
-            "customer_sign":customer.customer_sign,
-            "sales_verified": customer.sales_verified,
-            "accounts_verified": customer.accounts_verified,
-            "vehicle_name": customer.vehicle_name,
-            "vehicle_variant": customer.vehicle_variant,
-            "ex_showroom_price": customer.ex_showroom_price,
-            "tax": customer.tax
-        }
-        for customer in customers
-    ]
-    return customer_data
+    return customers
 
 
 @router.get("/customers/{customer_id}", response_model=schemas.CustomerOut)
@@ -350,25 +371,5 @@ def get_customer_by_id(customer_id: int, db: Session = Depends(database.get_db),
         raise HTTPException(status_code=404, detail="Customer not found or you are not authorized to view this customer.")
 
 
-    customer_data = {
-        "customer_id": customer.customer_id,
-        "name": customer.name,
-        "first_name": customer.first_name,
-        "last_name": customer.last_name,
-        "address": customer.address,
-        "phone_number": customer.phone_number,
-        "status": customer.status,
-        "branch_id": customer.branch_id,
-        "photo_adhaar_combined":customer.photo_adhaar_combined,
-        "photo_passport": customer.photo_passport,
-        "customer_sign": customer.customer_sign,
-        "sales_verified": customer.sales_verified,
-        "accounts_verified": customer.accounts_verified,
-        "vehicle_name": customer.vehicle_name,
-        "vehicle_variant": customer.vehicle_variant,
-        "ex_showroom_price": customer.ex_showroom_price,
-        "tax": customer.tax
-    }
-
-    return customer_data
+    return customer
 
