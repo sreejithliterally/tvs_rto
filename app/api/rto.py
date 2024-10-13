@@ -72,13 +72,13 @@ def update_customer(
     phone_number: Optional[str] = Form(None),
     address: Optional[str] = Form(None),
     status: Optional[str] = Form(None),
-    registration_number: Optional[str] = Form(None),
+    vehicle_number: Optional[str] = Form(None),
     rto_comments: Optional[str] = Form(None),
     photo_adhaar_front: Optional[UploadFile] = File(None),
     photo_adhaar_back: Optional[UploadFile] = File(None),
     photo_passport: Optional[UploadFile] = File(None),
     customer_sign: Optional[UploadFile] = File(None),
-    photo_vehicle: Optional[UploadFile] = File(None),
+
     db: Session = Depends(database.get_db),
     current_user: models.User = Depends(oauth2.get_current_user)
 ):
@@ -101,8 +101,8 @@ def update_customer(
         customer.address = address
     if status is not None:
         customer.status = status
-    if registration_number is not None:
-        customer.registration_number = registration_number
+    if vehicle_number is not None:
+        customer.vehicle_number = vehicle_number
     if rto_comments is not None:
         customer.rto_comments = rto_comments
 
@@ -127,13 +127,8 @@ def update_customer(
         sign_filename = generate_unique_filename(customer_sign.filename)
         customer.customer_sign = utils.upload_image_to_s3(compressed_sign, "hogspot", sign_filename)
 
-    if photo_vehicle is not None:
-        compressed_vehicle_image = compress_image(photo_vehicle)
-        vehicle_image_filename = generate_unique_filename(photo_vehicle.filename)
-        customer.photo_vehicle = utils.upload_image_to_s3(compressed_vehicle_image, "hogspot", vehicle_image_filename)
-
-    # Mark RTO verification as complete if a registration number is provided
-    if registration_number:
+    
+    if vehicle_number:
         customer.rto_verified = True
 
     db.commit()
@@ -209,7 +204,6 @@ def get_customer_by_id(customer_id: int, db: Session = Depends(database.get_db),
         raise HTTPException(status_code=404, detail="Customer not found or you are not authorized to view this customer.")
 
     return schemas.CustomerOut.from_orm(customer)
-
 
 
 

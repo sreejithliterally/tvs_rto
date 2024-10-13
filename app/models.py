@@ -56,6 +56,9 @@ class Customer(database.Base):
     address = Column(String, nullable=True)
     pin_code = Column(String, nullable=True)
     photo_adhaar_combined = Column(String, nullable=True)
+    number_plate_front = Column(String, nullable=True)
+    number_plate_back = Column(String, nullable=True)
+    delivery_photo = Column(String, nullable=True)
 
     photo_passport = Column(String, nullable=True)
     customer_sign = Column(String, nullable=True)
@@ -75,7 +78,7 @@ class Customer(database.Base):
     booking = Column(DECIMAL(10, 2), nullable=True)
     amount_paid = Column(DECIMAL(10, 2), nullable=False, default=0)
     balance_amount = Column(DECIMAL(10, 2), nullable=True)  
-
+    vehicle_number = Column(String, nullable=True)
     link_token = Column(String, unique=True, index=True)  # Unique token for the link
     link_expiration = Column(Boolean, default=False)
     status = Column(String, default="Pending")
