@@ -151,7 +151,7 @@ def get_customer_by_id(customer_id: int, db: Session = Depends(database.get_db),
     if not customer:
         raise HTTPException(status_code=404, detail="Customer not found or you are not authorized to view this customer.")
 
-    return schemas.CustomerOut.from_orm(customer)
+    return customer
 
 
 
