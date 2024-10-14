@@ -75,6 +75,7 @@ class CustomerOut(BaseModel):
     finance_amount: Optional[float] = None
     amount_paid: Optional[float] = None
     balance_amount: Optional[float] = None
+    total_price: Optional[float] = None
     optional_accessories: Optional[float] = None
     man_accessories: Optional[float] = None
     tp_registration: Optional[float] = None
