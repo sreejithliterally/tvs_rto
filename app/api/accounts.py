@@ -32,30 +32,7 @@ def get_pending_customers(
         models.Customer.accounts_verified == False
     ).all()
     
-    customer_data = [
-        {
-            "customer_id": customer.customer_id,
-            "name": customer.name,
-            "first_name": customer.first_name,
-            "last_name": customer.last_name,
-            "address": customer.address,
-            "phone_number": customer.phone_number,
-            "status": customer.status,
-            "branch_id": customer.branch_id,
-            "photo_adhaar_combined": customer.photo_adhaar_combined,
-            "photo_passport": customer.photo_passport,
-            "customer_sign": customer.customer_sign,
-            "sales_verified": customer.sales_verified,
-            "accounts_verified": customer.accounts_verified,
-            "vehicle_name": customer.vehicle_name,
-            "vehicle_variant": customer.vehicle_variant,
-            "ex_showroom_price": customer.ex_showroom_price,
-            "tax": customer.tax
-        }
-        for customer in customers
-    ]
-    
-    return customer_data
+    return customers
 
 
 
@@ -72,31 +49,7 @@ def get_verified_customers(
         models.Customer.accounts_verified == True
     ).all()
     
-    customer_data = [
-        {
-            "customer_id": customer.customer_id,
-            "name": customer.name,
-            "first_name": customer.first_name,
-            "last_name": customer.last_name,
-            "address": customer.address,
-            "phone_number": customer.phone_number,
-            "status": customer.status,
-            "branch_id": customer.branch_id,
-            "photo_adhaar_combined": customer.photo_adhaar_combined,
-            "photo_passport": customer.photo_passport,
-            "customer_sign": customer.customer_sign,
-            "sales_verified": customer.sales_verified,
-            "accounts_verified": customer.accounts_verified,
-            "vehicle_name": customer.vehicle_name,
-            "vehicle_variant": customer.vehicle_variant,
-            "ex_showroom_price": customer.ex_showroom_price,
-            "tax": customer.tax
-        }
-        for customer in customers
-    ]
-    
-    return customer_data
-
+    return customers
 
 
 @router.get("/customers/{customer_id}", response_model=schemas.CustomerOut)
