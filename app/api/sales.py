@@ -243,16 +243,92 @@ def update_customer(
     return customer
 
 
+# @router.put("/customers/{customer_id}", response_model=schemas.CustomerResponse)
+# def update_customer(
+#     customer_id: int,
+#     first_name: Optional[str] = Form(None),
+#     last_name: Optional[str] = Form(None),
+#     phone_number: Optional[str] = Form(None),
+#     address: Optional[str] = Form(None),
+#     status: Optional[str] = Form(None),
+#     sales_verified: Optional[bool] = Form(None),
+#     amount_paid: Optional[float] = Form(None),
+#     db: Session = Depends(database.get_db),
+#     current_user: models.User = Depends(oauth2.get_current_user)
+# ):
+#     is_user_in_sales_role(current_user)
+    
+#     customer = db.query(models.Customer).filter(models.Customer.customer_id == customer_id).first()
+#     if customer is None:
+#         raise HTTPException(status_code=404, detail="Customer not found")
+
+#     # Update fields if values are provided
+#     if first_name is not None:
+#         customer.first_name = first_name
+#     if last_name is not None:
+#         customer.last_name = last_name
+#     if phone_number is not None:
+#         customer.phone_number = phone_number
+#     if address is not None:
+#         customer.address = address
+#     if status is not None:
+#         customer.status = status
+#     if sales_verified is not None:
+#         customer.sales_verified = sales_verified
+#     if amount_paid is not None:
+#         amount_paid_decimal = Decimal(str(amount_paid))
+#         customer.amount_paid = amount_paid_decimal
+
+#         # Calculate the balance excluding finance amount as it's managed by accounts
+#         customer.balance_amount = customer.total_price - amount_paid_decimal
+
+
+#     db.commit()
+#     db.refresh(customer)
+
+#     full_name = f"{customer.first_name} {customer.last_name}"
+#     return schemas.CustomerResponse(
+#         customer_id=customer.customer_id,
+#         name=full_name,
+#         phone_number=customer.phone_number,
+#         address=customer.address,
+#         email=customer.email,
+#         vehicle_name=customer.vehicle_name,
+#         vehicle_variant=customer.vehicle_variant,
+#         vehicle_color=customer.vehicle_color,
+#         sales_verified=customer.sales_verified,
+#         accounts_verified=customer.accounts_verified,
+#         status=customer.status,
+#         created_at=customer.created_at,
+#         amount_paid=customer.amount_paid,
+#         balance_amount=customer.balance_amount
+#     )
+
 @router.put("/customers/{customer_id}", response_model=schemas.CustomerResponse)
 def update_customer(
     customer_id: int,
     first_name: Optional[str] = Form(None),
     last_name: Optional[str] = Form(None),
     phone_number: Optional[str] = Form(None),
+    alternate_phone_number: Optional[str] = Form(None),
+    dob: Optional[str] = Form(None),  # Assuming this is in string format (YYYY-MM-DD)
+    email: Optional[str] = Form(None),
     address: Optional[str] = Form(None),
-    status: Optional[str] = Form(None),
-    sales_verified: Optional[bool] = Form(None),
+    pin_code: Optional[str] = Form(None),
+    nominee: Optional[str] = Form(None),
+    relation: Optional[str] = Form(None),
+    vehicle_name: Optional[str] = Form(None),
+    vehicle_variant: Optional[str] = Form(None),
+    vehicle_color: Optional[str] = Form(None),
+    ex_showroom_price: Optional[float] = Form(None),
+    tax: Optional[float] = Form(None),
+    insurance: Optional[float] = Form(None),
+    tp_registration: Optional[float] = Form(None),
+    man_accessories: Optional[float] = Form(None),
+    optional_accessories: Optional[float] = Form(None),
+    total_price: Optional[float] = Form(None),
     amount_paid: Optional[float] = Form(None),
+    vehicle_number: Optional[str] = Form(None),
     db: Session = Depends(database.get_db),
     current_user: models.User = Depends(oauth2.get_current_user)
 ):
@@ -269,18 +345,60 @@ def update_customer(
         customer.last_name = last_name
     if phone_number is not None:
         customer.phone_number = phone_number
+    if alternate_phone_number is not None:
+        customer.alternate_phone_number = alternate_phone_number
+    if dob is not None:
+        try:
+            customer.dob = datetime.strptime(dob, "%Y-%m-%d").date()
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD.")
+    if email is not None:
+        customer.email = email
     if address is not None:
         customer.address = address
-    if status is not None:
-        customer.status = status
-    if sales_verified is not None:
-        customer.sales_verified = sales_verified
+    if pin_code is not None:
+        customer.pin_code = pin_code
+    if nominee is not None:
+        customer.nominee = nominee
+    if relation is not None:
+        customer.relation = relation
+    if vehicle_name is not None:
+        customer.vehicle_name = vehicle_name
+    if vehicle_variant is not None:
+        customer.vehicle_variant = vehicle_variant
+    if vehicle_color is not None:
+        customer.vehicle_color = vehicle_color
+    if ex_showroom_price is not None:
+        customer.ex_showroom_price = Decimal(str(ex_showroom_price))
+    if tax is not None:
+        customer.tax = Decimal(str(tax))
+    if insurance is not None:
+        customer.insurance = Decimal(str(insurance))
+    if tp_registration is not None:
+        customer.tp_registration = Decimal(str(tp_registration))
+    if man_accessories is not None:
+        customer.man_accessories = Decimal(str(man_accessories))
+    if optional_accessories is not None:
+        customer.optional_accessories = Decimal(str(optional_accessories))
+
     if amount_paid is not None:
         amount_paid_decimal = Decimal(str(amount_paid))
         customer.amount_paid = amount_paid_decimal
 
-        # Calculate the balance excluding finance amount as it's managed by accounts
         customer.balance_amount = customer.total_price - amount_paid_decimal
+    if vehicle_number is not None:
+        customer.vehicle_number = vehicle_number
+    total_price = (
+        ex_showroom_price +
+        tax +
+        insurance +
+        tp_registration +
+        man_accessories +
+        optional_accessories
+    )
+    customer.total_price = total_price
+    balance_amount = total_price - amount_paid
+    customer.balance_amount = balance_amount
 
 
     db.commit()
@@ -298,6 +416,8 @@ def update_customer(
         vehicle_color=customer.vehicle_color,
         sales_verified=customer.sales_verified,
         accounts_verified=customer.accounts_verified,
+        rto_verified=customer.rto_verified,
+        registered=customer.registered,
         status=customer.status,
         created_at=customer.created_at,
         amount_paid=customer.amount_paid,
