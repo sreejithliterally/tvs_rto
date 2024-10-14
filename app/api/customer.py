@@ -179,7 +179,7 @@ def submit_customer_form(
     # Generate unique filenames for each image
     aadhaar_combined_filename = generate_unique_filename("aadhaar_combined.jpg")
     passport_filename = generate_unique_filename(passport_photo.filename)
-    signature_filename = generate_unique_filename(customer_sign.filename)
+    signature_filename = generate_unique_filename("sign.png")
 
     # Upload compressed images to S3 with unique filenames
     aadhaar_combined_url = utils.upload_image_to_s3(compressed_combined_aadhaar, "hogspot", aadhaar_combined_filename)

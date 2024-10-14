@@ -3,7 +3,7 @@ import uuid
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, Form, status
 from typing import List, Optional
 import utils
-
+import io
 from sqlalchemy.orm import Session
 from uuid import uuid4
 import models, schemas, database, oauth2, utils
@@ -12,6 +12,8 @@ from sqlalchemy import func
 from datetime import datetime
 from PIL import Image
 from decimal import Decimal
+import cv2
+import numpy as np
 
 
 router = APIRouter(
@@ -19,6 +21,67 @@ router = APIRouter(
     tags=["Sales"],
     dependencies=[Depends(oauth2.get_current_user)]
 )
+
+
+def remove_background(image: UploadFile) -> BytesIO:
+    # Read the uploaded image as a numpy array using OpenCV
+    file_bytes = np.frombuffer(image.file.read(), np.uint8)
+    img = cv2.imdecode(file_bytes, cv2.IMREAD_GRAYSCALE)
+
+    # Define a threshold for the background
+    thresh = 110
+    
+    # Threshold the image to create a binary image
+    _, img_thresh = cv2.threshold(img, thresh, 255, cv2.THRESH_BINARY)
+
+    # Convert the thresholded image back to PIL Image for further processing
+    img_pil = Image.fromarray(img_thresh).convert("RGBA")
+    
+    # Load the pixel data from the image
+    pixdata = img_pil.load()
+
+    # Get the width and height of the image
+    width, height = img_pil.size
+
+    # Loop over the pixels and make the white pixels transparent
+    for y in range(height):
+        for x in range(width):
+            if pixdata[x, y] == (255, 255, 255, 255):  # White pixel
+                pixdata[x, y] = (255, 255, 255, 0)     # Make transparent
+
+    # Save the modified image to a BytesIO object
+    transparent_image_io = BytesIO()
+    img_pil.save(transparent_image_io, format="PNG")
+    transparent_image_io.seek(0)
+
+    return transparent_image_io
+
+def combine_images_vertically(image1: UploadFile, image2: UploadFile) -> BytesIO:
+    # Open both images
+    image1 = Image.open(io.BytesIO(image1.file.read()))
+    image2 = Image.open(io.BytesIO(image2.file.read()))
+    
+    # Get the width and height of both images
+    width1, height1 = image1.size
+    width2, height2 = image2.size
+
+    # Create a new image with the width of the wider image and the combined height
+    total_height = height1 + height2
+    max_width = max(width1, width2)
+    
+    # Create a blank image for the combined result
+    combined_image = Image.new("RGB", (max_width, total_height))
+    
+    # Paste the first image at the top and the second image below it
+    combined_image.paste(image1, (0, 0))
+    combined_image.paste(image2, (0, height1))
+    
+    # Save combined image to BytesIO
+    combined_image_bytes = BytesIO()
+    combined_image.save(combined_image_bytes, format='JPEG')
+    combined_image_bytes.seek(0)
+    
+    return combined_image_bytes
 
 
 def is_user_in_sales_role(user: models.User):
@@ -47,14 +110,20 @@ def get_pending_balances(db: Session = Depends(database.get_db), current_user: m
     return customers_with_pending_balances
 
 
-def compress_image(uploaded_file: UploadFile, quality=85) -> BytesIO:
-    image = Image.open(uploaded_file.file)
+def compress_image(file: BytesIO, quality=85) -> BytesIO:
+    image = Image.open(file)  # Now works with BytesIO directly
+    
+    # Convert the image to RGB if it's not (to ensure compatibility with JPEG)
     if image.mode in ("RGBA", "P"):
         image = image.convert("RGB")
+        
+    # Save the image into a BytesIO object
     compressed_image = BytesIO()
     image.save(compressed_image, format='JPEG', quality=quality)
-    compressed_image.seek(0)
+    compressed_image.seek(0)  # Reset the file pointer to the beginning
+    
     return compressed_image
+
 
 
 def generate_unique_filename(original_filename: str) -> str:
@@ -101,6 +170,79 @@ async def update_customer(
     return customer
 
 
+
+
+
+@router.put("/customers/update-adhaar/{customer_id}", response_model=schemas.CustomerResponse)
+def update_customer(
+    customer_id: int,
+    aadhaar_front_photo: UploadFile = File(...),
+    aadhaar_back_photo: UploadFile = File(...),
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(oauth2.get_current_user)
+):
+    is_user_in_sales_role(current_user)
+    
+    customer = db.query(models.Customer).filter(models.Customer.customer_id == customer_id).first()
+    if customer is None:
+        raise HTTPException(status_code=404, detail="Customer not found")
+    combined_aadhaar_image = combine_images_vertically(aadhaar_front_photo, aadhaar_back_photo)
+    aadhaar_combined_io = BytesIO(combined_aadhaar_image.read())
+    compressed_combined_aadhaar = compress_image(aadhaar_combined_io)
+    aadhaar_combined_filename = generate_unique_filename("aadhaar_combined.jpg")
+    aadhaar_combined_url = utils.upload_image_to_s3(compressed_combined_aadhaar, "hogspot", aadhaar_combined_filename)
+    customer.photo_adhaar_combined = aadhaar_combined_url
+    db.commit()
+    db.refresh(customer)
+    return customer
+
+@router.put("/customers/update-passport-photo/{customer_id}", response_model=schemas.CustomerResponse)
+def update_customer(
+    customer_id: int,
+    passport_photo: UploadFile = File(...),
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(oauth2.get_current_user)
+):
+    is_user_in_sales_role(current_user)
+    
+    customer = db.query(models.Customer).filter(models.Customer.customer_id == customer_id).first()
+    if customer is None:
+        raise HTTPException(status_code=404, detail="Customer not found")
+
+    passport_io = BytesIO(passport_photo.file.read())
+    compressed_passport = compress_image(passport_io)
+    passport_compressed_filename = generate_unique_filename("passport.jpg")
+    passport_url = utils.upload_image_to_s3(compressed_passport, "hogspot", passport_compressed_filename)
+    customer.photo_passport = passport_url
+    db.commit()
+    db.refresh(customer)
+    return customer
+
+
+@router.put("/customers/update-customersign/{customer_id}", response_model=schemas.CustomerResponse)
+def update_customer(
+    customer_id: int,
+    customer_sign: UploadFile = File(...),
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(oauth2.get_current_user)
+):
+    is_user_in_sales_role(current_user)
+    
+    customer = db.query(models.Customer).filter(models.Customer.customer_id == customer_id).first()
+    if customer is None:
+        raise HTTPException(status_code=404, detail="Customer not found")
+    
+    transparent_signature = remove_background(customer_sign)
+
+    compressed_sign = compress_image(transparent_signature)
+    sign_compressed_filename = generate_unique_filename("sign.png")
+    sign_url = utils.upload_image_to_s3(compressed_sign, "hogspot", sign_compressed_filename)
+    customer.customer_sign = sign_url
+    db.commit()
+    db.refresh(customer)
+    return customer
+
+
 @router.put("/customers/{customer_id}", response_model=schemas.CustomerResponse)
 def update_customer(
     customer_id: int,
@@ -111,13 +253,10 @@ def update_customer(
     status: Optional[str] = Form(None),
     sales_verified: Optional[bool] = Form(None),
     amount_paid: Optional[float] = Form(None),
-    photo_adhaar_front: Optional[UploadFile] = File(None),
-    photo_adhaar_back: Optional[UploadFile] = File(None),
-    photo_passport: Optional[UploadFile] = File(None),
-    customer_sign: Optional[UploadFile] = File(None),
-    db: Session = Depends(database.get_db)
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(oauth2.get_current_user)
 ):
-    is_user_in_sales_role(oauth2.get_current_user)
+    is_user_in_sales_role(current_user)
     
     customer = db.query(models.Customer).filter(models.Customer.customer_id == customer_id).first()
     if customer is None:
@@ -143,26 +282,6 @@ def update_customer(
         # Calculate the balance excluding finance amount as it's managed by accounts
         customer.balance_amount = customer.total_price - amount_paid_decimal
 
-    # Handle file uploads if they are provided
-    if photo_adhaar_front is not None:
-        compressed_aadhaar_front = compress_image(photo_adhaar_front)
-        aadhaar_front_filename = generate_unique_filename(photo_adhaar_front.filename)
-        customer.photo_adhaar_front = utils.upload_image_to_s3(compressed_aadhaar_front, "hogspot", aadhaar_front_filename)
-
-    if photo_adhaar_back is not None:
-        compressed_aadhaar_back = compress_image(photo_adhaar_back)
-        aadhaar_back_filename = generate_unique_filename(photo_adhaar_back.filename)
-        customer.photo_adhaar_back = utils.upload_image_to_s3(compressed_aadhaar_back, "hogspot", aadhaar_back_filename)
-
-    if photo_passport is not None:
-        compressed_passport = compress_image(photo_passport)
-        passport_filename = generate_unique_filename(photo_passport.filename)
-        customer.photo_passport = utils.upload_image_to_s3(compressed_passport, "hogspot", passport_filename)
-
-    if customer_sign is not None:
-        compressed_sign = compress_image(customer_sign)
-        sign_filename = generate_unique_filename(customer_sign.filename)
-        customer.customer_sign = utils.upload_image_to_s3(compressed_sign, "hogspot", sign_filename)
 
     db.commit()
     db.refresh(customer)
