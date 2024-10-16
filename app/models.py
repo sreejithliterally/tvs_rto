@@ -107,7 +107,7 @@ class VerificationLog(database.Base):
 
 
 class FinanceOption(database.Base):
-    __tablename__ = "finance_options"
+    __tablename__ = "finance_options"       
 
     finance_id = Column(Integer, primary_key=True, index=True)
     company_name = Column(String, unique=True)

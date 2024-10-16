@@ -3,6 +3,8 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 from decimal import Decimal
 import models, database, oauth2, schemas
+from datetime import datetime
+
 
 router = APIRouter(
     prefix="/accounts",
@@ -101,38 +103,6 @@ def verify_customer_by_accounts(customer_id: int, db: Session = Depends(database
 
     return {"message": "Accounts verification completed and balance amount updated based on finance approval."}
 
-@router.put("/customers/{customer_id}/finance", response_model=schemas.CustomerOut)
-def update_finance_details(
-    customer_id: int,
-    finance_id: Optional[int],
-    finance_amount: Optional[float],
-    db: Session = Depends(database.get_db),
-    current_user: models.User = Depends(oauth2.get_current_user)
-):
-    is_user_in_accounts_role(current_user)
-    
-    customer = db.query(models.Customer).filter(
-        models.Customer.customer_id == customer_id,
-        models.Customer.branch_id == current_user.branch_id
-    ).first()
-    
-    if not customer:
-        raise HTTPException(status_code=404, detail="Customer not found")
-
-    if finance_id is not None:
-        customer.finance_id = finance_id
-
-    if finance_amount is not None:
-        finance_amount_decimal = Decimal(str(finance_amount))
-        customer.finance_amount = finance_amount_decimal
-
-        # Update balance amount based on finance
-        customer.balance_amount = customer.total_price - customer.amount_paid - finance_amount_decimal
-    
-    db.commit()
-    db.refresh(customer)
-    
-    return customer
 
 
 @router.put("/customers/{customer_id}/{finance_id}", response_model=schemas.CustomerResponse)

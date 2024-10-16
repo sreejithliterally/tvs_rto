@@ -243,66 +243,6 @@ def update_customer(
     return customer
 
 
-# @router.put("/customers/{customer_id}", response_model=schemas.CustomerResponse)
-# def update_customer(
-#     customer_id: int,
-#     first_name: Optional[str] = Form(None),
-#     last_name: Optional[str] = Form(None),
-#     phone_number: Optional[str] = Form(None),
-#     address: Optional[str] = Form(None),
-#     status: Optional[str] = Form(None),
-#     sales_verified: Optional[bool] = Form(None),
-#     amount_paid: Optional[float] = Form(None),
-#     db: Session = Depends(database.get_db),
-#     current_user: models.User = Depends(oauth2.get_current_user)
-# ):
-#     is_user_in_sales_role(current_user)
-    
-#     customer = db.query(models.Customer).filter(models.Customer.customer_id == customer_id).first()
-#     if customer is None:
-#         raise HTTPException(status_code=404, detail="Customer not found")
-
-#     # Update fields if values are provided
-#     if first_name is not None:
-#         customer.first_name = first_name
-#     if last_name is not None:
-#         customer.last_name = last_name
-#     if phone_number is not None:
-#         customer.phone_number = phone_number
-#     if address is not None:
-#         customer.address = address
-#     if status is not None:
-#         customer.status = status
-#     if sales_verified is not None:
-#         customer.sales_verified = sales_verified
-#     if amount_paid is not None:
-#         amount_paid_decimal = Decimal(str(amount_paid))
-#         customer.amount_paid = amount_paid_decimal
-
-#         # Calculate the balance excluding finance amount as it's managed by accounts
-#         customer.balance_amount = customer.total_price - amount_paid_decimal
-
-
-#     db.commit()
-#     db.refresh(customer)
-
-#     full_name = f"{customer.first_name} {customer.last_name}"
-#     return schemas.CustomerResponse(
-#         customer_id=customer.customer_id,
-#         name=full_name,
-#         phone_number=customer.phone_number,
-#         address=customer.address,
-#         email=customer.email,
-#         vehicle_name=customer.vehicle_name,
-#         vehicle_variant=customer.vehicle_variant,
-#         vehicle_color=customer.vehicle_color,
-#         sales_verified=customer.sales_verified,
-#         accounts_verified=customer.accounts_verified,
-#         status=customer.status,
-#         created_at=customer.created_at,
-#         amount_paid=customer.amount_paid,
-#         balance_amount=customer.balance_amount
-#     )
 
 @router.put("/customers/{customer_id}", response_model=schemas.CustomerResponse)
 def update_customer(
