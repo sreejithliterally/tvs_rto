@@ -27,8 +27,8 @@
                   "x": 20,
                   "y": 490
                 },
-                "width": 150,
-                "height": 150
+                "width": 100,
+                "height": 100
               },
               {
                 "page": 3,
@@ -36,8 +36,8 @@
                   "x": 90,
                   "y": 480
                 },
-                "width": 150,
-                "height": 150
+                "width": 100,
+                "height": 100
               }
             ]
           },        
@@ -66,6 +66,517 @@
           },
           {
             "name": "tvscreditnosign.png",
+            "placements": [
+              {
+                "page": 3,
+                "position": {
+                  "x": 420,
+                  "y": 0
+                },
+                "width": 150,
+                "height": 150
+              },
+              {
+                "page": 3,
+                "position": {
+                  "x": 420,
+                  "y": 350
+                },
+                "width": 150,
+                "height": 150
+              }
+            ]
+          }
+        ]
+      },
+      "sreeramcheng": {
+        "seals": [
+          {
+            "name": "sreeramchengau.png",
+            "placements": [
+              {
+                "page": 3,
+                "position": {
+                  "x": 30,
+                  "y": 510
+                },
+                "width": 100,
+                "height": 100
+              },
+              {
+                "page": 3,
+                "position": {
+                  "x": 100,
+                  "y": 500
+                },
+                "width": 100,
+                "height": 100
+              }
+            ]
+          },        
+          {
+            "name": "sreeramchengsign.png",
+            "placements": [
+              {
+                "page": 3,
+                "position": {
+                  "x": 20,
+                  "y": 57
+                },
+                "width": 150,
+                "height": 150
+              },
+              {
+                "page": 3,
+                "position": {
+                  "x": 20,
+                  "y": 350
+                },
+                "width": 150,
+                "height": 150
+              }
+            ]
+          },
+          {
+            "name": "sreeramchengnosign.png",
+            "placements": [
+              {
+                "page": 3,
+                "position": {
+                  "x": 420,
+                  "y": 0
+                },
+                "width": 150,
+                "height": 150
+              },
+              {
+                "page": 3,
+                "position": {
+                  "x": 420,
+                  "y": 350
+                },
+                "width": 150,
+                "height": 150
+              }
+            ]
+          }
+        ]
+      },
+      "tatacap": {
+        "seals": [
+          {
+            "name": "tatacapau.png",
+            "placements": [
+              {
+                "page": 3,
+                "position": {
+                  "x": 30,
+                  "y": 510
+                },
+                "width": 150,
+                "height": 150
+              },
+              {
+                "page": 3,
+                "position": {
+                  "x": 100,
+                  "y": 500
+                },
+                "width": 150,
+                "height": 150
+              }
+            ]
+          },        
+          {
+            "name": "tatacapsign.png",
+            "placements": [
+              {
+                "page": 3,
+                "position": {
+                  "x": 20,
+                  "y": 57
+                },
+                "width": 150,
+                "height": 150
+              },
+              {
+                "page": 3,
+                "position": {
+                  "x": 20,
+                  "y": 350
+                },
+                "width": 150,
+                "height": 150
+              }
+            ]
+          },
+          {
+            "name": "tatacapnosign.png",
+            "placements": [
+              {
+                "page": 3,
+                "position": {
+                  "x": 420,
+                  "y": 0
+                },
+                "width": 150,
+                "height": 150
+              },
+              {
+                "page": 3,
+                "position": {
+                  "x": 420,
+                  "y": 350
+                },
+                "width": 150,
+                "height": 150
+              }
+            ]
+          }
+        ]
+      },
+      "hdb": {
+        "seals": [
+          {
+            "name": "hdbau.png",
+            "placements": [
+              {
+                "page": 3,
+                "position": {
+                  "x": 20,
+                  "y": 490
+                },
+                "width": 100,
+                "height": 100
+              },
+              {
+                "page": 3,
+                "position": {
+                  "x": 90,
+                  "y": 480
+                },
+                "width": 100,
+                "height": 100
+              }
+            ]
+          },        
+          {
+            "name": "hdbsign.png",
+            "placements": [
+              {
+                "page": 3,
+                "position": {
+                  "x": 20,
+                  "y": 57
+                },
+                "width": 150,
+                "height": 150
+              },
+              {
+                "page": 3,
+                "position": {
+                  "x": 20,
+                  "y": 350
+                },
+                "width": 150,
+                "height": 150
+              }
+            ]
+          },
+          {
+            "name": "hdbnosign.png",
+            "placements": [
+              {
+                "page": 3,
+                "position": {
+                  "x": 420,
+                  "y": 0
+                },
+                "width": 150,
+                "height": 150
+              },
+              {
+                "page": 3,
+                "position": {
+                  "x": 420,
+                  "y": 350
+                },
+                "width": 150,
+                "height": 150
+              }
+            ]
+          }
+        ]
+      },
+      "indus": {
+        "seals": [
+          {
+            "name": "indusau.png",
+            "placements": [
+              {
+                "page": 3,
+                "position": {
+                  "x": 20,
+                  "y": 490
+                },
+                "width": 100,
+                "height": 100
+              },
+              {
+                "page": 3,
+                "position": {
+                  "x": 90,
+                  "y": 480
+                },
+                "width": 100,
+                "height": 100
+              }
+            ]
+          },        
+          {
+            "name": "indussign.png",
+            "placements": [
+              {
+                "page": 3,
+                "position": {
+                  "x": 20,
+                  "y": 57
+                },
+                "width": 150,
+                "height": 150
+              },
+              {
+                "page": 3,
+                "position": {
+                  "x": 20,
+                  "y": 350
+                },
+                "width": 150,
+                "height": 150
+              }
+            ]
+          },
+          {
+            "name": "indusnosign.png",
+            "placements": [
+              {
+                "page": 3,
+                "position": {
+                  "x": 420,
+                  "y": 0
+                },
+                "width": 150,
+                "height": 150
+              },
+              {
+                "page": 3,
+                "position": {
+                  "x": 420,
+                  "y": 350
+                },
+                "width": 150,
+                "height": 150
+              }
+            ]
+          }
+        ]
+      },
+      "kotak": {
+        "seals": [
+          {
+            "name": "kotakau.png",
+            "placements": [
+              {
+                "page": 3,
+                "position": {
+                  "x": 20,
+                  "y": 490
+                },
+                "width": 100,
+                "height": 100
+              },
+              {
+                "page": 3,
+                "position": {
+                  "x": 90,
+                  "y": 480
+                },
+                "width": 100,
+                "height": 100
+              }
+            ]
+          },        
+          {
+            "name": "kotaksign.png",
+            "placements": [
+              {
+                "page": 3,
+                "position": {
+                  "x": 20,
+                  "y": 57
+                },
+                "width": 150,
+                "height": 150
+              },
+              {
+                "page": 3,
+                "position": {
+                  "x": 20,
+                  "y": 350
+                },
+                "width": 150,
+                "height": 150
+              }
+            ]
+          },
+          {
+            "name": "kotaknosign.png",
+            "placements": [
+              {
+                "page": 3,
+                "position": {
+                  "x": 420,
+                  "y": 0
+                },
+                "width": 150,
+                "height": 150
+              },
+              {
+                "page": 3,
+                "position": {
+                  "x": 420,
+                  "y": 350
+                },
+                "width": 150,
+                "height": 150
+              }
+            ]
+          }
+        ]
+      },
+      "sreeramalp": {
+        "seals": [
+          {
+            "name": "sreeramalpau.png",
+            "placements": [
+              {
+                "page": 3,
+                "position": {
+                  "x": 20,
+                  "y": 490
+                },
+                "width": 100,
+                "height": 100
+              },
+              {
+                "page": 3,
+                "position": {
+                  "x": 90,
+                  "y": 480
+                },
+                "width": 100,
+                "height": 100
+              }
+            ]
+          },        
+          {
+            "name": "sreeramalpsign.png",
+            "placements": [
+              {
+                "page": 3,
+                "position": {
+                  "x": 20,
+                  "y": 57
+                },
+                "width": 150,
+                "height": 150
+              },
+              {
+                "page": 3,
+                "position": {
+                  "x": 20,
+                  "y": 350
+                },
+                "width": 150,
+                "height": 150
+              }
+            ]
+          },
+          {
+            "name": "sreeramalpnosign.png",
+            "placements": [
+              {
+                "page": 3,
+                "position": {
+                  "x": 420,
+                  "y": 0
+                },
+                "width": 150,
+                "height": 150
+              },
+              {
+                "page": 3,
+                "position": {
+                  "x": 420,
+                  "y": 350
+                },
+                "width": 150,
+                "height": 150
+              }
+            ]
+          }
+        ]
+      },
+      "bajajalp": {
+        "seals": [
+          {
+            "name": "bajajalpau.png",
+            "placements": [
+              {
+                "page": 3,
+                "position": {
+                  "x": 20,
+                  "y": 490
+                },
+                "width": 100,
+                "height": 100
+              },
+              {
+                "page": 3,
+                "position": {
+                  "x": 90,
+                  "y": 480
+                },
+                "width": 100,
+                "height": 100
+              }
+            ]
+          },        
+          {
+            "name": "bajajalpsign.png",
+            "placements": [
+              {
+                "page": 3,
+                "position": {
+                  "x": 20,
+                  "y": 57
+                },
+                "width": 150,
+                "height": 150
+              },
+              {
+                "page": 3,
+                "position": {
+                  "x": 20,
+                  "y": 350
+                },
+                "width": 150,
+                "height": 150
+              }
+            ]
+          },
+          {
+            "name": "bajajalpnosign.png",
             "placements": [
               {
                 "page": 3,
@@ -187,7 +698,7 @@
           "page": 3,
           "position": {
             "x": 360,
-            "y": 500
+            "y": 460
           },
           "width": 150,
           "height": 150
@@ -196,7 +707,7 @@
           "page": 3,
           "position": {
             "x": 420,
-            "y": 490
+            "y": 470
           },
           "width": 150,
           "height": 150

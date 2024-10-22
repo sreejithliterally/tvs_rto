@@ -7,6 +7,7 @@ from PIL import Image
 import json
 import os
 import uuid
+import cv2
 
 router = APIRouter(
     prefix="/pdf",
@@ -268,3 +269,5 @@ async def process_pdf(
     
     return FileResponse(output_pdf_path, filename=f"processed_{pdf.filename}", media_type='application/pdf')
 
+
+        
