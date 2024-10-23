@@ -62,6 +62,7 @@ class Customer(database.Base):
 
     photo_passport = Column(String, nullable=True)
     customer_sign = Column(String, nullable=True)
+    customer_sign_copy = Column(String, nullable=True)
     nominee = Column(String)
     relation = Column(String)
     vehicle_name = Column(String)   
@@ -79,6 +80,7 @@ class Customer(database.Base):
     amount_paid = Column(DECIMAL(10, 2), nullable=False, default=0)
     balance_amount = Column(DECIMAL(10, 2), nullable=True)  
     vehicle_number = Column(String, nullable=True)
+    link = Column(String, nullable=True)
     link_token = Column(String, unique=True, index=True)  # Unique token for the link
     link_expiration = Column(Boolean, default=False)
     status = Column(String, default="Pending")

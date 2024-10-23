@@ -27,7 +27,7 @@ def verify(plain_password, hashed_pass):
 
 
 
-def upload_image_to_s3(image: BytesIO, bucket_name: str, file_name: str = None) -> str:
+async def upload_image_to_s3(image: BytesIO, bucket_name: str, file_name: str = None) -> str:
     s3 = boto3.client('s3', aws_access_key_id=AWS_SERVER_PUBLIC_KEY, aws_secret_access_key=AWS_SERVER_SECRET_KEY)
     try:
         # Generate unique filename if not provided

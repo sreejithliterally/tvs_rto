@@ -134,7 +134,7 @@ def get_customer_data(link_token: str, db: Session = Depends(database.get_db)):
 
 
 @router.post("/{link_token}", response_model=schemas.CustomerResponse)
-def submit_customer_form(
+async def submit_customer_form(
     link_token: str,
     first_name: str = Form(...),
     last_name: str = Form(...), 
@@ -175,16 +175,23 @@ def submit_customer_form(
     compressed_combined_aadhaar = compress_image(aadhaar_combined_io)
     compressed_passport = compress_image(passport_io)
     compressed_signature = compress_image(transparent_signature)
+    customer_sign.file.seek(0)
+    customer_sign_with_bg = BytesIO(customer_sign.file.read())
+    compressed_signature_with_bg = compress_image(customer_sign_with_bg)
+
+    # compressed_signature_copy = customer_sign
 
     # Generate unique filenames for each image
     aadhaar_combined_filename = generate_unique_filename("aadhaar_combined.jpg")
     passport_filename = generate_unique_filename(passport_photo.filename)
     signature_filename = generate_unique_filename("sign.png")
+    signature_copy_filename = generate_unique_filename("signcopy.png")
 
     # Upload compressed images to S3 with unique filenames
-    aadhaar_combined_url = utils.upload_image_to_s3(compressed_combined_aadhaar, "hogspot", aadhaar_combined_filename)
-    passport_url = utils.upload_image_to_s3(compressed_passport, "hogspot", passport_filename)
-    signature_url = utils.upload_image_to_s3(compressed_signature, "hogspot", signature_filename)
+    aadhaar_combined_url = await utils.upload_image_to_s3(compressed_combined_aadhaar, "hogspot", aadhaar_combined_filename)
+    passport_url = await utils.upload_image_to_s3(compressed_passport, "hogspot", passport_filename)
+    signature_url = await utils.upload_image_to_s3(compressed_signature, "hogspot", signature_filename)
+    signature_copy_url = await utils.upload_image_to_s3(compressed_signature_with_bg, "hogspot", signature_copy_filename)
 
     # Update customer details
     customer.first_name = first_name
@@ -198,6 +205,7 @@ def submit_customer_form(
     customer.photo_adhaar_combined = aadhaar_combined_url
     customer.photo_passport = passport_url
     customer.customer_sign = signature_url
+    customer.customer_sign_copy = signature_copy_url
 
     # Calculate balance_amount considering finance_amount if available
        # If finance details are not yet added, assume finance_amount is 0

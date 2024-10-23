@@ -62,7 +62,56 @@ class CustomerOut(BaseModel):
     branch_id: int
     photo_adhaar_combined: Optional[str] = None  # URL or S3 key for the Aadhaar back photo
     photo_passport: Optional[str] = None
-    customer_sign: Optional[str] = None  # URL or S3 key for the passport photo
+    customer_sign: Optional[str] = None 
+    customer_sign_copy: Optional[str] = None # URL or S3 key for the passport photo
+    vehicle_name: Optional[str] = None  # Marked as optional
+    vehicle_variant: Optional[str] = None  # Marked as optional
+    vehicle_color: Optional[str] = None
+    ex_showroom_price: Optional[float] = None  # Marked as optional
+    tax: Optional[float] = None  # Marked as optional
+    sales_verified: bool
+    accounts_verified: bool
+    rto_verified: Optional[bool] = None
+    finance_id: Optional[int] = None
+    finance_amount: Optional[float] = None
+    amount_paid: Optional[float] = None
+    balance_amount: Optional[float] = None
+    total_price: Optional[float] = None
+    optional_accessories: Optional[float] = None
+    man_accessories: Optional[float] = None
+    tp_registration: Optional[float] = None
+    insurance: Optional[float] = None
+    registered: Optional[bool] = None
+    vehicle_number: Optional[str] = None
+    number_plate_front: Optional[str] = None
+    number_plate_back: Optional[str] = None
+    delivery_photo: Optional[str] = None
+
+    class Config:
+        orm_mode = True
+        from_attributes = True
+
+
+
+class CustomerOutSales(BaseModel):
+    customer_id: int
+    name: str
+    first_name : Optional[str] = None
+    last_name: Optional[str] = None
+    address: Optional[str] = None
+    pin_code: Optional[str] = None
+    phone_number: str
+    alternate_phone_number: Optional[str] = None
+    dob: Optional[date] = None
+    nominee: Optional[str] = None
+    relation: Optional[str] = None
+    status: str
+    branch_id: int
+    link: Optional[str] = None
+    photo_adhaar_combined: Optional[str] = None  # URL or S3 key for the Aadhaar back photo
+    photo_passport: Optional[str] = None
+    customer_sign: Optional[str] = None 
+    customer_sign_copy: Optional[str] = None # URL or S3 key for the passport photo
     vehicle_name: Optional[str] = None  # Marked as optional
     vehicle_variant: Optional[str] = None  # Marked as optional
     vehicle_color: Optional[str] = None

@@ -235,9 +235,13 @@ def update_customer(
     transparent_signature = remove_background(customer_sign)
 
     compressed_sign = compress_image(transparent_signature)
+    compressed_sign_copy = compress_image(customer_sign)
     sign_compressed_filename = generate_unique_filename("sign.png")
+    sign_copy_compressed_filename = generate_unique_filename("signcopy.png")
     sign_url = utils.upload_image_to_s3(compressed_sign, "hogspot", sign_compressed_filename)
+    copy_sign_url = utils.upload_image_to_s3(compressed_sign_copy, "hogspot", sign_copy_compressed_filename)
     customer.customer_sign = sign_url
+    customer.customer_sign_copy = copy_sign_url
     db.commit()
     db.refresh(customer)
     return customer
@@ -401,10 +405,13 @@ def create_customer(
     # Calculate the balance amount
     balance_amount = total_price - amount_paid
 
+    customer_link = f"http://192.168.29.198:3000/customer-form/{customer_token}"
+
     new_customer = models.Customer(
         name=customer.name,
         phone_number=customer.phone_number,
         alternate_phone_number=customer.alternate_phone_number,
+        link = customer_link,
         link_token=customer_token,
         branch_id=current_user.branch_id,
         vehicle_name=customer.vehicle_name,
@@ -428,7 +435,7 @@ def create_customer(
     db.commit()
     db.refresh(new_customer)
     
-    customer_link = f"http://192.168.29.198:3000/customer-form/{customer_token}"
+    
     return {"customer_link": customer_link}
 
 
@@ -522,7 +529,7 @@ def verify_customer_sales(customer_id: int, db: Session = Depends(database.get_d
     return {"message": "Customer sales verification completed."}
 
 
-@router.get("/customers", response_model=List[schemas.CustomerOut])
+@router.get("/customers", response_model=List[schemas.CustomerOutSales])
 def get_customers_for_sales_executive(db: Session = Depends(database.get_db), current_user: models.User = Depends(oauth2.get_current_user)):
     if current_user.role_id != 2:
         raise HTTPException(status_code=403, detail="Not authorized.")
@@ -534,7 +541,7 @@ def get_customers_for_sales_executive(db: Session = Depends(database.get_db), cu
     return customers
 
 
-@router.get("/customers/{customer_id}", response_model=schemas.CustomerOut)
+@router.get("/customers/{customer_id}", response_model=schemas.CustomerOutSales)
 def get_customer_by_id(customer_id: int, db: Session = Depends(database.get_db), current_user: models.User = Depends(oauth2.get_current_user)):
     if current_user.role_id != 2:
 
