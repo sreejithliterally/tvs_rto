@@ -110,18 +110,25 @@ def get_pending_balances(db: Session = Depends(database.get_db), current_user: m
     return customers_with_pending_balances
 
 
-def compress_image(file: BytesIO, quality=85) -> BytesIO:
-    image = Image.open(file)  # Now works with BytesIO directly
+async def compress_image(uploaded_file: UploadFile, quality=85) -> BytesIO:
+    # Read the file contents of the UploadFile object
+    file_bytes = await uploaded_file.read()  # Ensure we read the content as bytes
     
-    # Convert the image to RGB if it's not (to ensure compatibility with JPEG)
+    # Convert it into a BytesIO stream
+    file_stream = BytesIO(file_bytes)
+    
+    # Open the image using PIL
+    image = Image.open(file_stream)
+
+    # Convert to RGB if the image is not in that format
     if image.mode in ("RGBA", "P"):
         image = image.convert("RGB")
         
-    # Save the image into a BytesIO object
+    # Compress the image into another BytesIO stream
     compressed_image = BytesIO()
     image.save(compressed_image, format='JPEG', quality=quality)
     compressed_image.seek(0)  # Reset the file pointer to the beginning
-    
+
     return compressed_image
 
 
@@ -157,9 +164,9 @@ async def update_customer(
     delivery_photo_bytes = BytesIO(await delivery_photo.read())
 
     # Call your upload function with the BytesIO objects
-    number_plate_front_url = utils.upload_image_to_s3(number_plate_front_bytes, "hogspot", number_plate_front_filename)
-    number_plate_back_url = utils.upload_image_to_s3(number_plate_back_bytes, "hogspot", number_plate_back_filename)
-    delivery_photo_url = utils.upload_image_to_s3(delivery_photo_bytes, "hogspot", delivery_photo_filename)
+    number_plate_front_url = await utils.upload_image_to_s3(number_plate_front_bytes, "hogspot", number_plate_front_filename)
+    number_plate_back_url = await utils.upload_image_to_s3(number_plate_back_bytes, "hogspot", number_plate_back_filename)
+    delivery_photo_url = await utils.upload_image_to_s3(delivery_photo_bytes, "hogspot", delivery_photo_filename)
 
     customer.number_plate_front = number_plate_front_url
     customer.number_plate_back = number_plate_back_url
@@ -174,7 +181,7 @@ async def update_customer(
 
 
 @router.put("/customers/update-adhaar/{customer_id}", response_model=schemas.CustomerResponse)
-def update_customer(
+async def update_customer(
     customer_id: int,
     aadhaar_front_photo: UploadFile = File(...),
     aadhaar_back_photo: UploadFile = File(...),
@@ -190,14 +197,14 @@ def update_customer(
     aadhaar_combined_io = BytesIO(combined_aadhaar_image.read())
     compressed_combined_aadhaar = compress_image(aadhaar_combined_io)
     aadhaar_combined_filename = generate_unique_filename("aadhaar_combined.jpg")
-    aadhaar_combined_url = utils.upload_image_to_s3(compressed_combined_aadhaar, "hogspot", aadhaar_combined_filename)
+    aadhaar_combined_url = await utils.upload_image_to_s3(compressed_combined_aadhaar, "hogspot", aadhaar_combined_filename)
     customer.photo_adhaar_combined = aadhaar_combined_url
     db.commit()
     db.refresh(customer)
     return customer
 
 @router.put("/customers/update-passport-photo/{customer_id}", response_model=schemas.CustomerResponse)
-def update_customer(
+async def update_customer(
     customer_id: int,
     passport_photo: UploadFile = File(...),
     db: Session = Depends(database.get_db),
@@ -212,7 +219,7 @@ def update_customer(
     passport_io = BytesIO(passport_photo.file.read())
     compressed_passport = compress_image(passport_io)
     passport_compressed_filename = generate_unique_filename("passport.jpg")
-    passport_url = utils.upload_image_to_s3(compressed_passport, "hogspot", passport_compressed_filename)
+    passport_url =await utils.upload_image_to_s3(compressed_passport, "hogspot", passport_compressed_filename)
     customer.photo_passport = passport_url
     db.commit()
     db.refresh(customer)
@@ -220,7 +227,7 @@ def update_customer(
 
 
 @router.put("/customers/update-customersign/{customer_id}", response_model=schemas.CustomerResponse)
-def update_customer(
+async def update_customer_sign(
     customer_id: int,
     customer_sign: UploadFile = File(...),
     db: Session = Depends(database.get_db),
@@ -232,18 +239,19 @@ def update_customer(
     if customer is None:
         raise HTTPException(status_code=404, detail="Customer not found")
     
-    transparent_signature = remove_background(customer_sign)
+    # Compress the signature image
+    compressed_sign = await compress_image(customer_sign)
 
-    compressed_sign = compress_image(transparent_signature)
-    compressed_sign_copy = compress_image(customer_sign)
+    # Generate unique filename and upload compressed image to S3
     sign_compressed_filename = generate_unique_filename("sign.png")
-    sign_copy_compressed_filename = generate_unique_filename("signcopy.png")
-    sign_url = utils.upload_image_to_s3(compressed_sign, "hogspot", sign_compressed_filename)
-    copy_sign_url = utils.upload_image_to_s3(compressed_sign_copy, "hogspot", sign_copy_compressed_filename)
+    sign_url = await utils.upload_image_to_s3(compressed_sign, "hogspot", sign_compressed_filename)
+
+    # Update customer with the new signature URL
     customer.customer_sign = sign_url
-    customer.customer_sign_copy = copy_sign_url
+
     db.commit()
     db.refresh(customer)
+
     return customer
 
 
@@ -270,14 +278,15 @@ def update_customer(
     tp_registration: Optional[float] = Form(None),
     man_accessories: Optional[float] = Form(None),
     optional_accessories: Optional[float] = Form(None),
-    total_price: Optional[float] = Form(None),
     amount_paid: Optional[float] = Form(None),
     vehicle_number: Optional[str] = Form(None),
     db: Session = Depends(database.get_db),
     current_user: models.User = Depends(oauth2.get_current_user)
 ):
+    # Check user role
     is_user_in_sales_role(current_user)
     
+    # Fetch customer record
     customer = db.query(models.Customer).filter(models.Customer.customer_id == customer_id).first()
     if customer is None:
         raise HTTPException(status_code=404, detail="Customer not found")
@@ -312,6 +321,8 @@ def update_customer(
         customer.vehicle_variant = vehicle_variant
     if vehicle_color is not None:
         customer.vehicle_color = vehicle_color
+
+    # Update price-related fields and total price
     if ex_showroom_price is not None:
         customer.ex_showroom_price = Decimal(str(ex_showroom_price))
     if tax is not None:
@@ -325,29 +336,38 @@ def update_customer(
     if optional_accessories is not None:
         customer.optional_accessories = Decimal(str(optional_accessories))
 
+    # Recalculate total price only if relevant fields are updated
+    if (
+        ex_showroom_price is not None or tax is not None or insurance is not None or
+        tp_registration is not None or man_accessories is not None or optional_accessories is not None
+    ):
+        customer.total_price = (
+            customer.ex_showroom_price +
+            customer.tax +
+            customer.insurance +
+            customer.tp_registration +
+            customer.man_accessories +
+            customer.optional_accessories
+        )
+
+    # Handle amount_paid and balance_amount
     if amount_paid is not None:
         amount_paid_decimal = Decimal(str(amount_paid))
         customer.amount_paid = amount_paid_decimal
-
         customer.balance_amount = customer.total_price - amount_paid_decimal
+    else:
+        # Recalculate balance if only total_price was updated
+        customer.balance_amount = customer.total_price - customer.amount_paid
+
+    # Update vehicle number
     if vehicle_number is not None:
         customer.vehicle_number = vehicle_number
-    total_price = (
-        ex_showroom_price +
-        tax +
-        insurance +
-        tp_registration +
-        man_accessories +
-        optional_accessories
-    )
-    customer.total_price = total_price
-    balance_amount = total_price - amount_paid
-    customer.balance_amount = balance_amount
 
-
+    # Commit changes to the database
     db.commit()
     db.refresh(customer)
 
+    # Prepare response
     full_name = f"{customer.first_name} {customer.last_name}"
     return schemas.CustomerResponse(
         customer_id=customer.customer_id,
