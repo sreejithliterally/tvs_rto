@@ -112,7 +112,7 @@ def get_pending_customers(db: Session = Depends(database.get_db), current_user: 
     customers = db.query(models.Customer).filter(
         models.Customer.sales_verified == True,
         models.Customer.accounts_verified == True,
-        models.Customer.rto_verified == True
+        models.Customer.rto_verified == False
     ).all()
 
     if not customers:
