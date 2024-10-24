@@ -35,7 +35,7 @@ async def upload_chassis_data(
     file_content = await chassis_photo.read()
 
     # Upload the file to S3 using chassis_number as the name
-    s3_link = utils.upload_image_to_s3(BytesIO(file_content), "hogspot", photo_filename)
+    s3_link = await utils.upload_image_to_s3(BytesIO(file_content), "hogspot", photo_filename)
 
     # Save the chassis number, S3 link, and user who uploaded the file in the database
     new_chassis = models.Chassis(
