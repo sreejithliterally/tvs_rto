@@ -425,7 +425,7 @@ def create_customer(
     # Calculate the balance amount
     balance_amount = total_price - amount_paid
 
-    customer_link = f"https://192.168.29.199:3000/customer-form/{customer_token}"
+    customer_link = f"https://tophaven.netlify.app/customer-form/{customer_token}"
 
     new_customer = models.Customer(
         name=customer.name,
