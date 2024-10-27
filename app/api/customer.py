@@ -11,6 +11,7 @@ import uuid
 from PIL import Image
 import cv2
 import numpy as np
+import logging
 
 from datetime import datetime
 
@@ -81,19 +82,48 @@ def combine_images_vertically(image1: UploadFile, image2: UploadFile) -> BytesIO
     return combined_image_bytes
 
 
-def compress_image(file: BytesIO, quality=85) -> BytesIO:
-    image = Image.open(file)  # Now works with BytesIO directly
-    
-    # Convert the image to RGB if it's not (to ensure compatibility with JPEG)
+async def compress_image(file, min_size_kb=300, max_size_kb=400) -> BytesIO:
+    # Check if input is `UploadFile`; if so, read it into `bytes`
+    if isinstance(file, UploadFile):
+        file_bytes = await file.read()  # Use await if it's an UploadFile
+        file_stream = BytesIO(file_bytes)
+    elif isinstance(file, BytesIO):
+        file_stream = file  # Already a BytesIO object
+    else:
+        raise TypeError("Unsupported file type. Must be UploadFile or BytesIO.")
+
+    # Open the image using PIL
+    image = Image.open(file_stream)
+
+    # Convert to RGB if necessary
     if image.mode in ("RGBA", "P"):
         image = image.convert("RGB")
-        
-    # Save the image into a BytesIO object
+
+    quality = 85
     compressed_image = BytesIO()
-    image.save(compressed_image, format='JPEG', quality=quality)
-    compressed_image.seek(0)  # Reset the file pointer to the beginning
-    
+
+    while True:
+        compressed_image.seek(0)
+        compressed_image.truncate(0)
+        
+        image.save(compressed_image, format='JPEG', quality=quality)
+        size_kb = compressed_image.tell() / 1024
+        
+        # Check size constraints
+        if min_size_kb <= size_kb <= max_size_kb:
+            break
+        elif size_kb < min_size_kb:
+            quality += 5
+        else:
+            quality -= 5
+
+        if quality < 10 or quality > 95:
+            break
+
+    compressed_image.seek(0)
     return compressed_image
+
+
 
 
 # Function to generate a unique filename
@@ -172,12 +202,12 @@ async def submit_customer_form(
     passport_io = BytesIO(passport_photo.file.read())
 
     # Compress the images
-    compressed_combined_aadhaar = compress_image(aadhaar_combined_io)
-    compressed_passport = compress_image(passport_io)
-    compressed_signature = compress_image(transparent_signature)
+    compressed_combined_aadhaar = await compress_image(aadhaar_combined_io)
+    compressed_passport = await compress_image(passport_io)
+    compressed_signature = await compress_image(transparent_signature)
     customer_sign.file.seek(0)
     customer_sign_with_bg = BytesIO(customer_sign.file.read())
-    compressed_signature_with_bg = compress_image(customer_sign_with_bg)
+    compressed_signature_with_bg = await compress_image(customer_sign_with_bg)
 
     # compressed_signature_copy = customer_sign
 

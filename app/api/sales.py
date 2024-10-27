@@ -14,6 +14,7 @@ from PIL import Image
 from decimal import Decimal
 import cv2
 import numpy as np
+import logging
 
 
 router = APIRouter(
@@ -110,25 +111,45 @@ def get_pending_balances(db: Session = Depends(database.get_db), current_user: m
     return customers_with_pending_balances
 
 
-async def compress_image(uploaded_file: UploadFile, quality=85) -> BytesIO:
-    # Read the file contents of the UploadFile object
-    file_bytes = await uploaded_file.read()  # Ensure we read the content as bytes
-    
-    # Convert it into a BytesIO stream
-    file_stream = BytesIO(file_bytes)
-    
+async def compress_image(file, min_size_kb=300, max_size_kb=400) -> BytesIO:
+    # Check if input is `UploadFile`; if so, read it into `bytes`
+    if isinstance(file, UploadFile):
+        file_bytes = await file.read()  # Use await if it's an UploadFile
+        file_stream = BytesIO(file_bytes)
+    elif isinstance(file, BytesIO):
+        file_stream = file  # Already a BytesIO object
+    else:
+        raise TypeError("Unsupported file type. Must be UploadFile or BytesIO.")
+
     # Open the image using PIL
     image = Image.open(file_stream)
 
-    # Convert to RGB if the image is not in that format
+    # Convert to RGB if necessary
     if image.mode in ("RGBA", "P"):
         image = image.convert("RGB")
-        
-    # Compress the image into another BytesIO stream
-    compressed_image = BytesIO()
-    image.save(compressed_image, format='JPEG', quality=quality)
-    compressed_image.seek(0)  # Reset the file pointer to the beginning
 
+    quality = 85
+    compressed_image = BytesIO()
+
+    while True:
+        compressed_image.seek(0)
+        compressed_image.truncate(0)
+        
+        image.save(compressed_image, format='JPEG', quality=quality)
+        size_kb = compressed_image.tell() / 1024
+        
+        # Check size constraints
+        if min_size_kb <= size_kb <= max_size_kb:
+            break
+        elif size_kb < min_size_kb:
+            quality += 5
+        else:
+            quality -= 5
+
+        if quality < 10 or quality > 95:
+            break
+
+    compressed_image.seek(0)
     return compressed_image
 
 
@@ -193,14 +214,20 @@ async def update_customer(
     customer = db.query(models.Customer).filter(models.Customer.customer_id == customer_id).first()
     if customer is None:
         raise HTTPException(status_code=404, detail="Customer not found")
+    
+    # Combine Aadhaar images
     combined_aadhaar_image = combine_images_vertically(aadhaar_front_photo, aadhaar_back_photo)
-    aadhaar_combined_io = BytesIO(combined_aadhaar_image.read())
-    compressed_combined_aadhaar = compress_image(aadhaar_combined_io)
+    compressed_combined_aadhaar = await compress_image(combined_aadhaar_image)
+    
+    # Upload to S3
     aadhaar_combined_filename = generate_unique_filename("aadhaar_combined.jpg")
     aadhaar_combined_url = await utils.upload_image_to_s3(compressed_combined_aadhaar, "hogspot", aadhaar_combined_filename)
+    
+    # Update customer record
     customer.photo_adhaar_combined = aadhaar_combined_url
     db.commit()
     db.refresh(customer)
+    
     return customer
 
 @router.put("/customers/update-passport-photo/{customer_id}", response_model=schemas.CustomerResponse)
@@ -217,7 +244,7 @@ async def update_customer(
         raise HTTPException(status_code=404, detail="Customer not found")
 
     passport_io = BytesIO(passport_photo.file.read())
-    compressed_passport = compress_image(passport_io)
+    compressed_passport = await compress_image(passport_io)
     passport_compressed_filename = generate_unique_filename("passport.jpg")
     passport_url =await utils.upload_image_to_s3(compressed_passport, "hogspot", passport_compressed_filename)
     customer.photo_passport = passport_url
@@ -235,24 +262,33 @@ async def update_customer_sign(
 ):
     is_user_in_sales_role(current_user)
     
+    
     customer = db.query(models.Customer).filter(models.Customer.customer_id == customer_id).first()
     if customer is None:
         raise HTTPException(status_code=404, detail="Customer not found")
     
-    # Compress the signature image
-    compressed_sign = await compress_image(customer_sign)
+    
+    sign_content = await customer_sign.read()
+    customer_sign_bytesio = BytesIO(sign_content)
+    
+    
+    compressed_sign = await compress_image(customer_sign_bytesio)
 
-    # Generate unique filename and upload compressed image to S3
+    
     sign_compressed_filename = generate_unique_filename("sign.png")
+    
+    compressed_sign.seek(0)
     sign_url = await utils.upload_image_to_s3(compressed_sign, "hogspot", sign_compressed_filename)
 
-    # Update customer with the new signature URL
+   
     customer.customer_sign = sign_url
 
+    
     db.commit()
     db.refresh(customer)
 
     return customer
+
 
 
 
