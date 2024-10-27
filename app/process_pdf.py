@@ -3,7 +3,7 @@ import os
 
 STAMPS_DIR = "./stamps/"
 SIGNATURES_DIR = "./uploads/signatures/"
-TICK_MARK_IMAGE = "./assets/tick.png"
+TICK_MARK_IMAGE = "./assets/ticknew.png"
 CHASSIS_IMAGE_DIR = "./uploads/chassis/"
 
 
