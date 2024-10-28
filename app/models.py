@@ -55,6 +55,7 @@ class Customer(database.Base):
     email = Column(String, nullable=True)
     address = Column(String, nullable=True)
     pin_code = Column(String, nullable=True)
+    taluk = Column(String, nullable=True)
     photo_adhaar_combined = Column(String, nullable=True)
     number_plate_front = Column(String, nullable=True)
     number_plate_back = Column(String, nullable=True)

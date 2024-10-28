@@ -22,6 +22,7 @@ class CustomerBase(BaseModel):
     name: str
     phone_number: str
     alternate_phone_number: str
+    taluk: Optional[str] = None
     vehicle_name: str
     vehicle_variant: str
     vehicle_color: Optional[str] = None
@@ -53,6 +54,7 @@ class CustomerOut(BaseModel):
     last_name: Optional[str] = None
     address: Optional[str] = None
     pin_code: Optional[str] = None
+    taluk: Optional[str] = None
     phone_number: str
     alternate_phone_number: Optional[str] = None
     dob: Optional[date] = None
@@ -99,6 +101,8 @@ class CustomerOutSales(BaseModel):
     first_name : Optional[str] = None
     last_name: Optional[str] = None
     address: Optional[str] = None
+    taluk: Optional[str] = None
+
     pin_code: Optional[str] = None
     phone_number: str
     alternate_phone_number: Optional[str] = None

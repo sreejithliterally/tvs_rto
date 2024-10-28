@@ -437,6 +437,7 @@ def create_customer(
     print(customer_token)
 
     # Convert inputs to Decimal for accurate calculations
+
     ex_showroom_price = Decimal(customer.ex_showroom_price)
     tax = Decimal(customer.tax)
     insurance = Decimal(customer.insurance)
@@ -467,6 +468,7 @@ def create_customer(
         name=customer.name,
         phone_number=customer.phone_number,
         alternate_phone_number=customer.alternate_phone_number,
+        taluk = customer.taluk,
         link = customer_link,
         link_token=customer_token,
         branch_id=current_user.branch_id,
