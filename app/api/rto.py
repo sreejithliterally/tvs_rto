@@ -6,8 +6,6 @@ from sqlalchemy.orm import Session
 import models, schemas, database, oauth2
 from datetime import datetime
 import utils
-from .customer import compress_image
-from .sales import generate_unique_filename
 import uuid
 
 

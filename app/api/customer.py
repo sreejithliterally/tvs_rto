@@ -53,74 +53,8 @@ def remove_background(image: UploadFile) -> BytesIO:
 
     return transparent_image_io
 
-def combine_images_vertically(cropped_image1: BytesIO, cropped_image2: BytesIO) -> BytesIO:
-    # Load the cropped images from BytesIO
-    image1 = Image.open(cropped_image1)
-    image2 = Image.open(cropped_image2)
-    
-    # Get the width and height of both images
-    width1, height1 = image1.size
-    width2, height2 = image2.size
-
-    # Create a new image with the width of the wider image and the combined height
-    total_height = height1 + height2
-    max_width = max(width1, width2)
-    
-    # Create a blank image for the combined result
-    combined_image = Image.new("RGB", (max_width, total_height))
-    
-    # Paste the first image at the top and the second image below it
-    combined_image.paste(image1, (0, 0))
-    combined_image.paste(image2, (0, height1))
-    
-    # Save combined image to BytesIO
-    combined_image_bytes = BytesIO()
-    combined_image.save(combined_image_bytes, format='JPEG')
-    combined_image_bytes.seek(0)
-    
-    return combined_image_bytes
 
 
-async def compress_image(file, min_size_kb=300, max_size_kb=400) -> BytesIO:
-    # Check if input is `UploadFile`; if so, read it into `bytes`
-    if isinstance(file, UploadFile):
-        file_bytes = await file.read()  # Use await if it's an UploadFile
-        file_stream = BytesIO(file_bytes)
-    elif isinstance(file, BytesIO):
-        file_stream = file  # Already a BytesIO object
-    else:
-        raise TypeError("Unsupported file type. Must be UploadFile or BytesIO.")
-
-    # Open the image using PIL
-    image = Image.open(file_stream)
-
-    # Convert to RGB if necessary
-    if image.mode in ("RGBA", "P"):
-        image = image.convert("RGB")
-
-    quality = 85
-    compressed_image = BytesIO()
-
-    while True:
-        compressed_image.seek(0)
-        compressed_image.truncate(0)
-        
-        image.save(compressed_image, format='JPEG', quality=quality)
-        size_kb = compressed_image.tell() / 1024
-        
-        # Check size constraints
-        if min_size_kb <= size_kb <= max_size_kb:
-            break
-        elif size_kb < min_size_kb:
-            quality += 5
-        else:
-            quality -= 5
-
-        if quality < 10 or quality > 95:
-            break
-
-    compressed_image.seek(0)
-    return compressed_image
 
 
 
@@ -196,23 +130,26 @@ async def submit_customer_form(
     # Combine the cropped Aadhaar front and back images
 
     # Convert combined Aadhaar to BytesIO for compression
-    compressed_passport = await compress_image(passport_io)
+    compressed_passport = await utils.compress_image(passport_io)
     transparent_signature = remove_background(customer_sign)
-    compressed_signature = await compress_image(transparent_signature)
-
+    compressed_signature = await utils.compress_image(transparent_signature)
+    customer_sign.file.seek(0)
+    signature_copy = BytesIO(customer_sign.file.read())
+    
+    compressed_signature_copy = await utils.compress_image(signature_copy)
     # Generate unique filenames
     aadhaar_front_filename = generate_unique_filename("aadhaarfront.jpg")
     aadhaar_back_filename = generate_unique_filename("aadhaarback.jpg")
 
     passport_filename = generate_unique_filename(passport_photo.filename)
     signature_filename = generate_unique_filename("sign.png")
-
+    signature_copy_filename = generate_unique_filename("copysign")
     # Upload images to S3
     aadhaar_front_url = await utils.upload_image_to_s3(aadhaar_front_io, "hogspot", aadhaar_front_filename)
     aadhaar_back_url = await utils.upload_image_to_s3(aadhaar_back_io, "hogspot", aadhaar_back_filename)
     passport_url = await utils.upload_image_to_s3(compressed_passport, "hogspot", passport_filename)
     signature_url = await utils.upload_image_to_s3(compressed_signature, "hogspot", signature_filename)
-
+    signature_copy_url = await utils.upload_image_to_s3(compressed_signature_copy, "hogspot", signature_copy_filename)
     # Update customer details
     customer.first_name = first_name
     customer.last_name = last_name
@@ -226,6 +163,7 @@ async def submit_customer_form(
     customer.adhaar_back = aadhaar_back_url
     customer.photo_passport = passport_url
     customer.customer_sign = signature_url
+    customer.customer_sign_copy = signature_copy_url
 
     # Calculate balance amount
     finance_amount = customer.finance_amount or Decimal("0.0")
