@@ -8,6 +8,8 @@ from datetime import datetime
 import utils
 from .customer import compress_image
 from .sales import generate_unique_filename
+import uuid
+
 
 router = APIRouter(
     prefix="/rto",
@@ -155,8 +157,32 @@ def get_customer_by_id(customer_id: int, db: Session = Depends(database.get_db))
 
 
 
+def generate_unique_filename(original_filename: str) -> str:
+    ext = original_filename.split('.')[-1]  # Get the file extension
+    unique_name = f"{uuid.uuid4()}.{ext}"  # Create a unique filename with the same extension
+    return unique_name
 
 
 
 
 
+@router.post("/combineadhaar/{customer_id}",response_model=schemas.CustomerOut)
+async def combine_adhaar(
+    customer_id: int,
+    db: Session = Depends(database.get_db),
+    aadhaar_front_photo: UploadFile = File(...),
+    aadhaar_back_photo: UploadFile = File(...),
+):
+    customer = db.query(models.Customer).filter(models.Customer.customer_id == customer_id).first()
+
+    aadhaar_front_io = BytesIO(aadhaar_front_photo.file.read())
+    aadhaar_back_io = BytesIO(aadhaar_back_photo.file.read())
+    combined_adhaar = utils.combine_images_vertically(aadhaar_front_io,aadhaar_back_io)
+    combined_adhaar_io = BytesIO(combined_adhaar.read())
+    compressed_adhaar = await utils.compress_image(combined_adhaar_io)
+    aadhaar_filename = generate_unique_filename("aadhaarcombined.jpg")
+
+    aadhaar_combined_url = await utils.upload_image_to_s3(compressed_adhaar, "hogspot", aadhaar_filename)
+
+    customer.photo_adhaar_combined = aadhaar_combined_url
+    return customer

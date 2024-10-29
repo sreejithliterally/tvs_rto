@@ -146,3 +146,76 @@ def order_points(pts):
     rect[3] = pts[np.argmax(diff)]  # Bottom-left
 
     return rect
+
+
+
+
+def combine_images_vertically(cropped_image1: BytesIO, cropped_image2: BytesIO) -> BytesIO:
+    # Load the cropped images from BytesIO
+    image1 = Image.open(cropped_image1)
+    image2 = Image.open(cropped_image2)
+    
+    # Get the width and height of both images
+    width1, height1 = image1.size
+    width2, height2 = image2.size
+
+    # Create a new image with the width of the wider image and the combined height
+    total_height = height1 + height2
+    max_width = max(width1, width2)
+    
+    # Create a blank image for the combined result
+    combined_image = Image.new("RGB", (max_width, total_height))
+    
+    # Paste the first image at the top and the second image below it
+    combined_image.paste(image1, (0, 0))
+    combined_image.paste(image2, (0, height1))
+    
+    # Save combined image to BytesIO
+    combined_image_bytes = BytesIO()
+    combined_image.save(combined_image_bytes, format='JPEG')
+    combined_image_bytes.seek(0)
+    
+    return combined_image_bytes
+
+
+
+async def compress_image(file, min_size_kb=300, max_size_kb=400) -> BytesIO:
+    # Check if input is `UploadFile`; if so, read it into `bytes`
+    if isinstance(file, UploadFile):
+        file_bytes = await file.read()  # Use await if it's an UploadFile
+        file_stream = BytesIO(file_bytes)
+    elif isinstance(file, BytesIO):
+        file_stream = file  # Already a BytesIO object
+    else:
+        raise TypeError("Unsupported file type. Must be UploadFile or BytesIO.")
+
+    # Open the image using PIL
+    image = Image.open(file_stream)
+
+    # Convert to RGB if necessary
+    if image.mode in ("RGBA", "P"):
+        image = image.convert("RGB")
+
+    quality = 85
+    compressed_image = BytesIO()
+
+    while True:
+        compressed_image.seek(0)
+        compressed_image.truncate(0)
+        
+        image.save(compressed_image, format='JPEG', quality=quality)
+        size_kb = compressed_image.tell() / 1024
+        
+        # Check size constraints
+        if min_size_kb <= size_kb <= max_size_kb:
+            break
+        elif size_kb < min_size_kb:
+            quality += 5
+        else:
+            quality -= 5
+
+        if quality < 10 or quality > 95:
+            break
+
+    compressed_image.seek(0)
+    return compressed_image
