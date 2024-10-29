@@ -142,8 +142,8 @@ def get_customers(db: Session = Depends(database.get_db), current_user: models.U
 
 
 @router.get("/{customer_id}", response_model=schemas.CustomerOut)
-def get_customer_by_id(customer_id: int, db: Session = Depends(database.get_db), current_user: models.User = Depends(oauth2.get_current_user)):
-    is_user_in_rto_role(current_user)
+def get_customer_by_id(customer_id: int, db: Session = Depends(database.get_db)):
+
 
     
     customer = db.query(models.Customer).filter(models.Customer.customer_id == customer_id).first()

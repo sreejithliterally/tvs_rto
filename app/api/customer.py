@@ -53,11 +53,10 @@ def remove_background(image: UploadFile) -> BytesIO:
 
     return transparent_image_io
 
-
-def combine_images_vertically(image1: UploadFile, image2: UploadFile) -> BytesIO:
-    # Open both images
-    image1 = Image.open(io.BytesIO(image1.file.read()))
-    image2 = Image.open(io.BytesIO(image2.file.read()))
+def combine_images_vertically(cropped_image1: BytesIO, cropped_image2: BytesIO) -> BytesIO:
+    # Load the cropped images from BytesIO
+    image1 = Image.open(cropped_image1)
+    image2 = Image.open(cropped_image2)
     
     # Get the width and height of both images
     width1, height1 = image1.size
@@ -167,10 +166,10 @@ def get_customer_data(link_token: str, db: Session = Depends(database.get_db)):
 async def submit_customer_form(
     link_token: str,
     first_name: str = Form(...),
-    last_name: str = Form(...), 
+    last_name: str = Form(...),
     dob: str = Form(...),
-    email: str = Form(...), 
-    address: str = Form(...), 
+    email: str = Form(...),
+    address: str = Form(...),
     pin_code: str = Form(...),
     nominee: str = Form(...),
     relation: str = Form(...),
@@ -182,46 +181,37 @@ async def submit_customer_form(
 ):
     # Fetch the customer based on the link token
     customer = db.query(models.Customer).filter(models.Customer.link_token == link_token).first()
-
     if not customer:
         raise HTTPException(status_code=404, detail="Customer not found.")
-    
+
     try:
         dob = datetime.strptime(dob, "%Y-%m-%d").date()
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD.")
     
-    # Remove white background from signature
-    transparent_signature = remove_background(customer_sign)
-
-    # Combine Aadhaar front and back photos vertically
-    combined_aadhaar_image = combine_images_vertically(aadhaar_front_photo, aadhaar_back_photo)
-
-    # Convert to BytesIO for compression
-    aadhaar_combined_io = BytesIO(combined_aadhaar_image.read())
+    
     passport_io = BytesIO(passport_photo.file.read())
+    aadhaar_front_io = BytesIO(aadhaar_front_photo.file.read())
+    aadhaar_back_io = BytesIO(aadhaar_back_photo.file.read())
+    # Combine the cropped Aadhaar front and back images
 
-    # Compress the images
-    compressed_combined_aadhaar = await compress_image(aadhaar_combined_io)
+    # Convert combined Aadhaar to BytesIO for compression
     compressed_passport = await compress_image(passport_io)
+    transparent_signature = remove_background(customer_sign)
     compressed_signature = await compress_image(transparent_signature)
-    customer_sign.file.seek(0)
-    customer_sign_with_bg = BytesIO(customer_sign.file.read())
-    compressed_signature_with_bg = await compress_image(customer_sign_with_bg)
 
-    # compressed_signature_copy = customer_sign
+    # Generate unique filenames
+    aadhaar_front_filename = generate_unique_filename("aadhaarfront.jpg")
+    aadhaar_back_filename = generate_unique_filename("aadhaarback.jpg")
 
-    # Generate unique filenames for each image
-    aadhaar_combined_filename = generate_unique_filename("aadhaar_combined.jpg")
     passport_filename = generate_unique_filename(passport_photo.filename)
     signature_filename = generate_unique_filename("sign.png")
-    signature_copy_filename = generate_unique_filename("signcopy.png")
 
-    # Upload compressed images to S3 with unique filenames
-    aadhaar_combined_url = await utils.upload_image_to_s3(compressed_combined_aadhaar, "hogspot", aadhaar_combined_filename)
+    # Upload images to S3
+    aadhaar_front_url = await utils.upload_image_to_s3(aadhaar_front_io, "hogspot", aadhaar_front_filename)
+    aadhaar_back_url = await utils.upload_image_to_s3(aadhaar_back_io, "hogspot", aadhaar_back_filename)
     passport_url = await utils.upload_image_to_s3(compressed_passport, "hogspot", passport_filename)
     signature_url = await utils.upload_image_to_s3(compressed_signature, "hogspot", signature_filename)
-    signature_copy_url = await utils.upload_image_to_s3(compressed_signature_with_bg, "hogspot", signature_copy_filename)
 
     # Update customer details
     customer.first_name = first_name
@@ -232,25 +222,20 @@ async def submit_customer_form(
     customer.email = email
     customer.address = address
     customer.pin_code = pin_code
-    customer.photo_adhaar_combined = aadhaar_combined_url
+    customer.adhaar_front = aadhaar_front_url
+    customer.adhaar_back = aadhaar_back_url
     customer.photo_passport = passport_url
     customer.customer_sign = signature_url
-    customer.customer_sign_copy = signature_copy_url
 
-    # Calculate balance_amount considering finance_amount if available
-       # If finance details are not yet added, assume finance_amount is 0
-    finance_amount = customer.finance_amount if customer.finance_amount is not None else Decimal("0.0")
+    # Calculate balance amount
+    finance_amount = customer.finance_amount or Decimal("0.0")
     amount_paid = customer.amount_paid or Decimal("0.0")
-    
-    # Calculate the balance amount
     customer.balance_amount = customer.total_price - finance_amount - amount_paid
-
     customer.status = "submitted"
 
     db.commit()
     db.refresh(customer)
 
-    # Prepare full name for response
     full_name = f"{first_name} {last_name}"
 
     return schemas.CustomerResponse(

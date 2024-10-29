@@ -63,6 +63,8 @@ class CustomerOut(BaseModel):
     status: str
     branch_id: int
     photo_adhaar_combined: Optional[str] = None  # URL or S3 key for the Aadhaar back photo
+    adhaar_front: Optional[str] = None
+    adhaar_back: Optional[str] = None
     photo_passport: Optional[str] = None
     customer_sign: Optional[str] = None 
     customer_sign_copy: Optional[str] = None # URL or S3 key for the passport photo
@@ -112,7 +114,10 @@ class CustomerOutSales(BaseModel):
     status: str
     branch_id: int
     link: Optional[str] = None
-    photo_adhaar_combined: Optional[str] = None  # URL or S3 key for the Aadhaar back photo
+    photo_adhaar_combined: Optional[str] = None
+    adhaar_front: Optional[str] = None
+    adhaar_back: Optional[str] = None
+
     photo_passport: Optional[str] = None
     customer_sign: Optional[str] = None 
     customer_sign_copy: Optional[str] = None # URL or S3 key for the passport photo
