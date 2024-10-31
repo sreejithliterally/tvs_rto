@@ -183,4 +183,7 @@ async def combine_adhaar(
     aadhaar_combined_url = await utils.upload_image_to_s3(compressed_adhaar, "hogspot", aadhaar_filename)
 
     customer.photo_adhaar_combined = aadhaar_combined_url
+
+    db.commit()
+    db.refresh(customer)
     return customer
