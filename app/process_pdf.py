@@ -3,15 +3,16 @@ import os
 
 STAMPS_DIR = "./stamps/"
 SIGNATURES_DIR = "./uploads/signatures/"
-TICK_MARK_IMAGE = "./assets/ticknew.png"
 CHASSIS_IMAGE_DIR = "./uploads/chassis/"
+
+
 
 
 os.makedirs(STAMPS_DIR, exist_ok=True)
 os.makedirs(SIGNATURES_DIR, exist_ok=True)
 os.makedirs(CHASSIS_IMAGE_DIR, exist_ok=True)
 
-
+MIN_SIZE_POINTS = 0.20 * 72
 
 def add_stamps_and_signature(pdf_path, signature_path, output_pdf_path, config, selected_finance, text_inputs,chassis_image_path=None):
     # Open the PDF
@@ -118,24 +119,37 @@ def add_stamps_and_signature(pdf_path, signature_path, output_pdf_path, config, 
                 page.insert_image(rect, filename=chassis_image_path)
     
 
-    for tick_item in config.get("ticks", []):
-        page_number = tick_item["page"]
-        if page_number - 1 < 0 or page_number - 1 >= len(doc):
-            raise IndexError(f"Page number {page_number} is out of range for the PDF.")
+    large_box_count = 0  # Initialize a counter for boxes larger than 0.29 inches
+
+    # Iterate through each page in the document
+    for page_num in range(len(doc)):
+        page = doc[page_num]  # Get the current page
         
-        page = doc[page_number - 1]
-        rect = fitz.Rect(
-            tick_item["position"]["x"],
-            tick_item["position"]["y"],
-            tick_item["position"]["x"] + tick_item["width"],
-            tick_item["position"]["y"] + tick_item["height"]
-        )
-        # Insert tick mark image
-        page.insert_image(rect, filename=TICK_MARK_IMAGE)
+        # Get all graphical elements (drawings) on the page
+        drawings = page.get_drawings()
+        
+        # Count and place image in rectangles larger than 0.29 inches
+        for drawing in drawings:
+            # Check if the drawing has a 'rect' attribute
+            if 'rect' in drawing:
+                rect = drawing['rect']
+                # Check if the rectangle dimensions are greater than 0.29 inches
+                if rect.width > MIN_SIZE_POINTS and rect.height > MIN_SIZE_POINTS:
+                    large_box_count += 1  # Increment the count
+
+                    # Calculate the center position for the image
+                    image_width, image_height = 20, 20  # Adjust these based on the desired image size in points
+                    center_x = rect.x0 + (rect.width - image_width) / 2
+                    center_y = rect.y0 + (rect.height - image_height) / 2
+                    image_rect = fitz.Rect(center_x, center_y, center_x + image_width, center_y + image_height)
+
+                    # Insert the image in the center òf the box
+                    page.insert_image(image_rect, filename=image_path)
+
     
     
     # Save the modified PDF
     doc.save(output_pdf_path)
     doc.close()
 
-    
+image_path = "./assets/ticknew.png"

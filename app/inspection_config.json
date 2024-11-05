@@ -183,8 +183,8 @@
         {
             "page": 1,
             "position": {"x": 300, "y": 150},
-            "width": 420,
-            "height": 420
+            "width": 390,
+            "height": 390
         }
     ]
 }
