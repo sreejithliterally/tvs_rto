@@ -95,22 +95,21 @@ def get_customer_data(link_token: str, db: Session = Depends(database.get_db)):
     return customer_data
 
 
-
 @router.post("/{link_token}", response_model=schemas.CustomerResponse)
 async def submit_customer_form(
     link_token: str,
-    first_name: str = Form(...),
-    last_name: str = Form(...),
-    dob: str = Form(...),
-    email: str = Form(...),
-    address: str = Form(...),
-    pin_code: str = Form(...),
-    nominee: str = Form(...),
-    relation: str = Form(...),
-    aadhaar_front_photo: UploadFile = File(...),
-    aadhaar_back_photo: UploadFile = File(...),
-    passport_photo: UploadFile = File(...),
-    customer_sign: UploadFile = File(...),
+    first_name: str = Form(None),
+    last_name: str = Form(None),
+    dob: str = Form(None),
+    email: str = Form(None),
+    address: str = Form(None),
+    pin_code: str = Form(None),
+    nominee: str = Form(None),
+    relation: str = Form(None),
+    aadhaar_front_photo: UploadFile = File(None),
+    aadhaar_back_photo: UploadFile = File(None),
+    passport_photo: UploadFile = File(None),
+    customer_sign: UploadFile = File(None),
     db: Session = Depends(database.get_db)
 ):
     # Fetch the customer based on the link token
@@ -118,52 +117,57 @@ async def submit_customer_form(
     if not customer:
         raise HTTPException(status_code=404, detail="Customer not found.")
 
-    try:
-        dob = datetime.strptime(dob, "%Y-%m-%d").date()
-    except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD.")
-    
-    
-    passport_io = BytesIO(passport_photo.file.read())
-    aadhaar_front_io = BytesIO(aadhaar_front_photo.file.read())
-    aadhaar_back_io = BytesIO(aadhaar_back_photo.file.read())
-    # Combine the cropped Aadhaar front and back images
+    # Check for dob format if provided
+    if dob:
+        try:
+            dob = datetime.strptime(dob, "%Y-%m-%d").date()
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD.")
 
-    # Convert combined Aadhaar to BytesIO for compression
-    compressed_passport = await utils.compress_image(passport_io)
-    transparent_signature = remove_background(customer_sign)
-    compressed_signature = await utils.compress_image(transparent_signature)
-    customer_sign.file.seek(0)
-    signature_copy = BytesIO(customer_sign.file.read())
-    
-    compressed_signature_copy = await utils.compress_image(signature_copy)
-    # Generate unique filenames
-    aadhaar_front_filename = generate_unique_filename("aadhaarfront.jpg")
-    aadhaar_back_filename = generate_unique_filename("aadhaarback.jpg")
+    # Process files only if they are provided
+    if passport_photo:
+        passport_io = BytesIO(passport_photo.file.read())
+        compressed_passport = await utils.compress_image(passport_io)
+        passport_filename = generate_unique_filename(passport_photo.filename)
+        passport_url = await utils.upload_image_to_s3(compressed_passport, "hogspot", passport_filename)
+        customer.photo_passport = passport_url
 
-    passport_filename = generate_unique_filename(passport_photo.filename)
-    signature_filename = generate_unique_filename("sign.png")
-    signature_copy_filename = generate_unique_filename("copysign")
-    # Upload images to S3
-    aadhaar_front_url = await utils.upload_image_to_s3(aadhaar_front_io, "hogspot", aadhaar_front_filename)
-    aadhaar_back_url = await utils.upload_image_to_s3(aadhaar_back_io, "hogspot", aadhaar_back_filename)
-    passport_url = await utils.upload_image_to_s3(compressed_passport, "hogspot", passport_filename)
-    signature_url = await utils.upload_image_to_s3(compressed_signature, "hogspot", signature_filename)
-    signature_copy_url = await utils.upload_image_to_s3(compressed_signature_copy, "hogspot", signature_copy_filename)
-    # Update customer details
-    customer.first_name = first_name
-    customer.last_name = last_name
-    customer.dob = dob
-    customer.nominee = nominee
-    customer.relation = relation
-    customer.email = email
-    customer.address = address
-    customer.pin_code = pin_code
-    customer.adhaar_front = aadhaar_front_url
-    customer.adhaar_back = aadhaar_back_url
-    customer.photo_passport = passport_url
-    customer.customer_sign = signature_url
-    customer.customer_sign_copy = signature_copy_url
+    if aadhaar_front_photo:
+        aadhaar_front_io = BytesIO(aadhaar_front_photo.file.read())
+        aadhaar_front_filename = generate_unique_filename("aadhaarfront.jpg")
+        aadhaar_front_url = await utils.upload_image_to_s3(aadhaar_front_io, "hogspot", aadhaar_front_filename)
+        customer.adhaar_front = aadhaar_front_url
+
+    if aadhaar_back_photo:
+        aadhaar_back_io = BytesIO(aadhaar_back_photo.file.read())
+        aadhaar_back_filename = generate_unique_filename("aadhaarback.jpg")
+        aadhaar_back_url = await utils.upload_image_to_s3(aadhaar_back_io, "hogspot", aadhaar_back_filename)
+        customer.adhaar_back = aadhaar_back_url
+
+    if customer_sign:
+        transparent_signature = remove_background(customer_sign)
+        compressed_signature = await utils.compress_image(transparent_signature)
+        signature_filename = generate_unique_filename("sign.png")
+        signature_url = await utils.upload_image_to_s3(compressed_signature, "hogspot", signature_filename)
+        customer.customer_sign = signature_url
+
+        # Optional copy of the signature
+        customer_sign.file.seek(0)
+        signature_copy = BytesIO(customer_sign.file.read())
+        compressed_signature_copy = await utils.compress_image(signature_copy)
+        signature_copy_filename = generate_unique_filename("copysign")
+        signature_copy_url = await utils.upload_image_to_s3(compressed_signature_copy, "hogspot", signature_copy_filename)
+        customer.customer_sign_copy = signature_copy_url
+
+    # Update customer details only if provided
+    customer.first_name = first_name if first_name else customer.first_name
+    customer.last_name = last_name if last_name else customer.last_name
+    customer.dob = dob if dob else customer.dob
+    customer.nominee = nominee if nominee else customer.nominee
+    customer.relation = relation if relation else customer.relation
+    customer.email = email if email else customer.email
+    customer.address = address if address else customer.address
+    customer.pin_code = pin_code if pin_code else customer.pin_code
 
     # Calculate balance amount
     finance_amount = customer.finance_amount or Decimal("0.0")
@@ -174,7 +178,7 @@ async def submit_customer_form(
     db.commit()
     db.refresh(customer)
 
-    full_name = f"{first_name} {last_name}"
+    full_name = f"{first_name} {last_name}" if first_name and last_name else customer.first_name or ""
 
     return schemas.CustomerResponse(
         customer_id=customer.customer_id,
