@@ -15,6 +15,16 @@
         ]
       }
     ],
+    "chassis_image": {
+        "placements": [
+            {
+                "page": 1,
+                "position": {"x": 310, "y": 150},
+                "width": 390,
+                "height": 390
+            }
+        ]
+    },
     
     "texts": [
         {
@@ -176,18 +186,9 @@
             "width": 25,
             "height": 25
         }
-    ],
-
-    "chassis_image": {
-    "placements": [
-        {
-            "page": 1,
-            "position": {"x": 300, "y": 150},
-            "width": 390,
-            "height": 390
-        }
     ]
-}
+
+  
 }
 
 

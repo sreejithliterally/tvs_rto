@@ -99,26 +99,7 @@ def add_stamps_and_signature(pdf_path, signature_path, output_pdf_path, config, 
             fontsize=font_size,
             color=text_color
         )
-
-
-    if chassis_image_path and os.path.exists(chassis_image_path):
-        chassis_config = config.get("chassis_image")
-        if chassis_config:
-            for placement in chassis_config["placements"]:
-                page_number = placement["page"]
-                if page_number - 1 < 0 or page_number - 1 >= len(doc):
-                    raise IndexError(f"Page number {page_number} is out of range for the PDF.")
-                
-                page = doc[page_number - 1]
-                rect = fitz.Rect(
-                    placement["position"]["x"],
-                    placement["position"]["y"],
-                    placement["position"]["x"] + placement["width"],
-                    placement["position"]["y"] + placement["height"]
-                )
-                page.insert_image(rect, filename=chassis_image_path)
     
-
     large_box_count = 0  # Initialize a counter for boxes larger than 0.29 inches
 
     # Iterate through each page in the document
@@ -146,6 +127,24 @@ def add_stamps_and_signature(pdf_path, signature_path, output_pdf_path, config, 
                     # Insert the image in the center òf the box
                     page.insert_image(image_rect, filename=image_path)
 
+
+
+    if chassis_image_path and os.path.exists(chassis_image_path):
+        chassis_config = config.get("chassis_image")
+        if chassis_config:
+            for placement in chassis_config["placements"]:
+                page_number = placement["page"]
+                if page_number - 1 < 0 or page_number - 1 >= len(doc):
+                    raise IndexError(f"Page number {page_number} is out of range for the PDF.")
+                
+                page = doc[page_number - 1]
+                rect = fitz.Rect(
+                    placement["position"]["x"],
+                    placement["position"]["y"],
+                    placement["position"]["x"] + placement["width"],
+                    placement["position"]["y"] + placement["height"]
+                )
+                page.insert_image(rect, filename=chassis_image_path)
     
     
     # Save the modified PDF
