@@ -713,6 +713,22 @@
           "height": 150
         }
       ]
-    }
+    },
+    "texts": [
+
+    
+
+        {
+            "key": "date",
+            "page": 2,
+            "position": {
+              "x": 80,
+              "y": 700
+            },
+            "font_size": 10,
+            "color": [0, 0, 0]
+        }
+
+    ]
   }
   

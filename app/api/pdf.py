@@ -110,7 +110,7 @@ async def process_pdf(pdf: UploadFile = File(...)):
 
 
 @router.post("/process_pdf/form20")
-async def process_pdf(pdf: UploadFile = File(...), signature: UploadFile = File(...),finance_company: str = Form(...)):
+async def process_pdf(pdf: UploadFile = File(...), signature: UploadFile = File(...),finance_company: str = Form(...),date: str = None):
     if pdf.content_type != "application/pdf":
         raise HTTPException(status_code=400, detail="Uploaded file is not a PDF.")
     if signature.content_type not in ["image/png", "image/jpeg"]:
@@ -120,7 +120,10 @@ async def process_pdf(pdf: UploadFile = File(...), signature: UploadFile = File(
     pdf_id = str(uuid.uuid4())
     pdf_path = os.path.join(OUTPUT_DIR, f"{pdf_id}_{pdf.filename}")
     signature_path = os.path.join(SIGNATURES_DIR, f"{pdf_id}_{signature.filename}")
-    text_inputs = ''
+    
+    text_inputs = {
+        "date": date
+    }
     with open(pdf_path, "wb") as pdf_file:
         pdf_file.write(await pdf.read())
     
