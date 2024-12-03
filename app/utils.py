@@ -54,6 +54,19 @@ async def upload_image_to_s3(image: BytesIO, bucket_name: str, file_name: str = 
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error uploading image")
 
 
+def get_s3_client():
+    try:
+        return boto3.client(
+            's3',
+            aws_access_key_id=AWS_SERVER_PUBLIC_KEY,
+            aws_secret_access_key=AWS_SERVER_SECRET_KEY
+        )
+    except NoCredentialsError:
+        logging.error("S3 credentials not available")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="S3 credentials not available"
+        )
 
 
 def edge_detect_and_crop(uploaded_file):

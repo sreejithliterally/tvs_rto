@@ -1,5 +1,5 @@
 from datetime import datetime, date
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr,HttpUrl
 from typing import Optional, List
 
 class UserCreate(BaseModel):
@@ -295,3 +295,13 @@ class CustomerBalanceOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+
+class ImageUrl(BaseModel):
+    name: str
+    url: HttpUrl
+
+class DownloadRequest(BaseModel):
+    customer_id: int
+    image_urls: List[ImageUrl]

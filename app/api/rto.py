@@ -1,12 +1,19 @@
 from io import BytesIO
 import logging
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, status
+from fastapi.responses import JSONResponse
+
 from typing import List, Optional
 from sqlalchemy.orm import Session
 import models, schemas, database, oauth2
 from datetime import datetime
 import utils
 import uuid
+import zipfile
+from fastapi.responses import StreamingResponse
+from botocore.exceptions import ClientError
+import io
+import requests
 
 
 router = APIRouter(
@@ -187,3 +194,55 @@ async def combine_adhaar(
     db.commit()
     db.refresh(customer)
     return customer
+
+
+BUCKET_NAME = "hogspot"
+
+
+@router.post("/download-images/")
+async def download_images(request: schemas.DownloadRequest):
+    try:
+        # Buffer for the ZIP file
+        zip_buffer = io.BytesIO()
+
+        # Initialize missing_files list
+        missing_files = []
+
+        # Create a ZipFile object in memory
+        with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
+            for image in request.image_urls:
+                try:
+                    # Cast the URL to a string explicitly
+                    image_url = str(image.url)
+
+                    # Fetch the image from the provided URL
+                    response = requests.get(image_url)
+
+                    # Check if the request was successful
+                    if response.status_code == 200:
+                        # Add the file to the ZIP
+                        zip_file.writestr(image.name, response.content)
+                    else:
+                        logging.error(f"Failed to download {image.name} from {image_url}")
+                        missing_files.append(image.name)
+                except Exception as e:
+                    logging.error(f"Error downloading image {image.name}: {e}")
+                    missing_files.append(image.name)
+
+        # Prepare the response
+        zip_buffer.seek(0)  # Move pointer to the beginning for reading
+
+        if missing_files:
+            return JSONResponse(
+                status_code=206,
+                content={"message": "Download partially completed", "missing_files": missing_files}
+            )
+
+        return StreamingResponse(
+            zip_buffer,
+            media_type="application/zip",
+            headers={"Content-Disposition": f"attachment; filename=customer_{request.customer_id}_documents.zip"}
+        )
+    except Exception as e:
+        logging.error(f"Error creating zip file: {e}")
+        raise HTTPException(status_code=500, detail="Failed to create ZIP file.")
