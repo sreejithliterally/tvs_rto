@@ -129,26 +129,26 @@ async def submit_customer_form(
         passport_io = BytesIO(passport_photo.file.read())
         compressed_passport = await utils.compress_image(passport_io)
         passport_filename = generate_unique_filename(passport_photo.filename)
-        passport_url = await utils.upload_image_to_s3(compressed_passport, "hogspot", passport_filename)
+        passport_url = await utils.upload_image_to_s3(compressed_passport, "tvstophaven", passport_filename)
         customer.photo_passport = passport_url
 
     if aadhaar_front_photo:
         aadhaar_front_io = BytesIO(aadhaar_front_photo.file.read())
         aadhaar_front_filename = generate_unique_filename("aadhaarfront.jpg")
-        aadhaar_front_url = await utils.upload_image_to_s3(aadhaar_front_io, "hogspot", aadhaar_front_filename)
+        aadhaar_front_url = await utils.upload_image_to_s3(aadhaar_front_io, "tvstophaven", aadhaar_front_filename)
         customer.adhaar_front = aadhaar_front_url
 
     if aadhaar_back_photo:
         aadhaar_back_io = BytesIO(aadhaar_back_photo.file.read())
         aadhaar_back_filename = generate_unique_filename("aadhaarback.jpg")
-        aadhaar_back_url = await utils.upload_image_to_s3(aadhaar_back_io, "hogspot", aadhaar_back_filename)
+        aadhaar_back_url = await utils.upload_image_to_s3(aadhaar_back_io, "tvstophaven", aadhaar_back_filename)
         customer.adhaar_back = aadhaar_back_url
 
     if customer_sign:
         transparent_signature = remove_background(customer_sign)
         compressed_signature = await utils.compress_image(transparent_signature)
         signature_filename = generate_unique_filename("sign.png")
-        signature_url = await utils.upload_image_to_s3(compressed_signature, "hogspot", signature_filename)
+        signature_url = await utils.upload_image_to_s3(compressed_signature, "tvstophaven", signature_filename)
         customer.customer_sign = signature_url
 
         # Optional copy of the signature
@@ -156,7 +156,7 @@ async def submit_customer_form(
         signature_copy = BytesIO(customer_sign.file.read())
         compressed_signature_copy = await utils.compress_image(signature_copy)
         signature_copy_filename = generate_unique_filename("copysign")
-        signature_copy_url = await utils.upload_image_to_s3(compressed_signature_copy, "hogspot", signature_copy_filename)
+        signature_copy_url = await utils.upload_image_to_s3(compressed_signature_copy, "tvstophaven", signature_copy_filename)
         customer.customer_sign_copy = signature_copy_url
 
     # Update customer details only if provided

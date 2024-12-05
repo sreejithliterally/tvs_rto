@@ -187,7 +187,7 @@ async def combine_adhaar(
     compressed_adhaar = await utils.compress_image(combined_adhaar_io)
     aadhaar_filename = generate_unique_filename("aadhaarcombined.jpg")
 
-    aadhaar_combined_url = await utils.upload_image_to_s3(compressed_adhaar, "hogspot", aadhaar_filename)
+    aadhaar_combined_url = await utils.upload_image_to_s3(compressed_adhaar, "tvstophaven", aadhaar_filename)
 
     customer.photo_adhaar_combined = aadhaar_combined_url
 
@@ -196,7 +196,7 @@ async def combine_adhaar(
     return customer
 
 
-BUCKET_NAME = "hogspot"
+BUCKET_NAME = "tvstophaven"
 
 
 @router.post("/download-images/")
