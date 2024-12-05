@@ -148,7 +148,7 @@ def add_stamps_and_signature(pdf_path, signature_path, output_pdf_path, config, 
     
     
     # Save the modified PDF
-    doc.save(output_pdf_path)
+    # doc.save(output_pdf_path)
     doc.close()
 
 image_path = "./assets/ticknew.png"
