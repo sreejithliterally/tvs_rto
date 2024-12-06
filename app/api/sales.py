@@ -185,9 +185,9 @@ async def update_customer(
     delivery_photo_bytes = BytesIO(await delivery_photo.read())
 
     # Call your upload function with the BytesIO objects
-    number_plate_front_url = await utils.upload_image_to_s3(number_plate_front_bytes, "hogspot", number_plate_front_filename)
-    number_plate_back_url = await utils.upload_image_to_s3(number_plate_back_bytes, "hogspot", number_plate_back_filename)
-    delivery_photo_url = await utils.upload_image_to_s3(delivery_photo_bytes, "hogspot", delivery_photo_filename)
+    number_plate_front_url = await utils.upload_image_to_s3(number_plate_front_bytes, "tvstophaven", number_plate_front_filename)
+    number_plate_back_url = await utils.upload_image_to_s3(number_plate_back_bytes, "tvstophaven", number_plate_back_filename)
+    delivery_photo_url = await utils.upload_image_to_s3(delivery_photo_bytes, "tvstophaven", delivery_photo_filename)
 
     customer.number_plate_front = number_plate_front_url
     customer.number_plate_back = number_plate_back_url
@@ -221,7 +221,7 @@ async def update_customer(
     
     # Upload to S3
     aadhaar_combined_filename = generate_unique_filename("aadhaar_combined.jpg")
-    aadhaar_combined_url = await utils.upload_image_to_s3(compressed_combined_aadhaar, "hogspot", aadhaar_combined_filename)
+    aadhaar_combined_url = await utils.upload_image_to_s3(compressed_combined_aadhaar, "tvstophaven", aadhaar_combined_filename)
     
     # Update customer record
     customer.photo_adhaar_combined = aadhaar_combined_url
@@ -246,7 +246,7 @@ async def update_customer(
     passport_io = BytesIO(passport_photo.file.read())
     compressed_passport = await compress_image(passport_io)
     passport_compressed_filename = generate_unique_filename("passport.jpg")
-    passport_url =await utils.upload_image_to_s3(compressed_passport, "hogspot", passport_compressed_filename)
+    passport_url =await utils.upload_image_to_s3(compressed_passport, "tvstophaven", passport_compressed_filename)
     customer.photo_passport = passport_url
     db.commit()
     db.refresh(customer)
@@ -278,7 +278,7 @@ async def update_customer_sign(
     sign_compressed_filename = generate_unique_filename("sign.png")
     
     compressed_sign.seek(0)
-    sign_url = await utils.upload_image_to_s3(compressed_sign, "hogspot", sign_compressed_filename)
+    sign_url = await utils.upload_image_to_s3(compressed_sign, "tvstophaven", sign_compressed_filename)
 
    
     customer.customer_sign = sign_url
