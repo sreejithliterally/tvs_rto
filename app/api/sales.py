@@ -198,6 +198,43 @@ async def update_customer(
     return customer
 
 
+@router.put("/customers/seperate-update-adhaar-photos/{customer_id}", response_model=schemas.CustomerResponse)
+async def update_customer_adhaar(
+    customer_id: int,
+    aadhaar_front_photo: UploadFile = File(...),
+    aadhaar_back_photo: UploadFile = File(...),
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(oauth2.get_current_user)
+):
+    is_user_in_sales_role(current_user)
+    
+    customer = db.query(models.Customer).filter(models.Customer.customer_id == customer_id).first()
+    if customer is None:
+        raise HTTPException(status_code=404, detail="Customer not found")
+
+    # Compress the Aadhaar front and back images
+    aadhaar_front_io = BytesIO(aadhaar_front_photo.file.read())
+    aadhaar_back_io = BytesIO(aadhaar_back_photo.file.read())
+
+    compressed_aadhaar_front = await compress_image(aadhaar_front_io)
+    compressed_aadhaar_back = await compress_image(aadhaar_back_io)
+
+    # Generate unique filenames
+    aadhaar_front_filename = generate_unique_filename("aadhaar_front.jpg")
+    aadhaar_back_filename = generate_unique_filename("aadhaar_back.jpg")
+
+    # Upload to S3
+    aadhaar_front_url = await utils.upload_image_to_s3(compressed_aadhaar_front, "tvstophaven", aadhaar_front_filename)
+    aadhaar_back_url = await utils.upload_image_to_s3(compressed_aadhaar_back, "tvstophaven", aadhaar_back_filename)
+    
+    # Update customer record with separate Aadhaar images
+    customer.adhaar_front = aadhaar_front_url
+    customer.adhaar_back = aadhaar_back_url
+    
+    db.commit()
+    db.refresh(customer)
+    
+    return customer
 
 
 
