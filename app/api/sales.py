@@ -657,13 +657,17 @@ def get_customer_by_id(customer_id: int, db: Session = Depends(database.get_db),
 @router.delete("/customers/delete/{customer_id}", response_model=dict)
 def delete_customer(customer_id: int, db: Session = Depends(database.get_db)):
     """
-    Delete a customer by ID.
+    Delete a customer by ID, ensuring related verification logs are handled.
     """
     customer = db.query(models.Customer).filter(models.Customer.customer_id == customer_id).first()
     
     if not customer:
         raise HTTPException(status_code=404, detail="Customer not found")
-
+    
+    # Delete related records in verification_logs
+    db.query(models.VerificationLog).filter(models.VerificationLog.customer_id == customer_id).delete()
+    
+    # Delete the customer
     db.delete(customer)
     db.commit()
 
