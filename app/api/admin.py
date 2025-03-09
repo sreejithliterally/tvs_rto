@@ -20,18 +20,60 @@ def admin_required(current_user: models.User = Depends(get_current_user)):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required")
 
 
-@router.get("/customers", response_model=List[schemas.CustomerOut])
+@router.get("/customers", response_model=List[schemas.CustomerListResponse])
 def get_all_customers(db: Session = Depends(database.get_db), current_user: models.User = Depends(oauth2.get_current_user)):
     if current_user.role_id != 1:
         raise HTTPException(status_code=403, detail="Not authorized.")
 
-    
-    customers = db.query(models.Customer).all()
+    # Query with joins to get all required information
+    customers = (
+        db.query(
+            models.Customer.customer_id,
+            models.Customer.name,
+            models.Customer.vehicle_name,
+            models.Customer.total_price,
+            models.Customer.sales_verified,
+            models.Customer.accounts_verified,
+            models.Customer.rto_verified,
+            models.Customer.registered,
+            models.User.first_name.label('sales_exec_first_name'),
+            models.User.last_name.label('sales_exec_last_name'),
+            models.Branch.name.label('branch_name')
+        )
+        .join(models.User, models.Customer.sales_executive_id == models.User.user_id)
+        .join(models.Branch, models.Customer.branch_id == models.Branch.branch_id)
+        .all()
+    )
 
     if not customers:
         raise HTTPException(status_code=404, detail="No customers found.")
 
-    return customers
+    # Process the results to format them according to the schema
+    formatted_customers = []
+    for customer in customers:
+        # Determine status based on verification flags
+        status = "Pending"
+        if customer.registered:
+            status = "Registered"
+        elif customer.rto_verified:
+            status = "RTO"
+        elif customer.accounts_verified:
+            status = "Accounts"
+        elif customer.sales_verified:
+            status = "Sales"
+
+        formatted_customer = {
+            "customer_id": customer.customer_id,
+            "name": customer.name,
+            "vehicle_name": customer.vehicle_name,
+            "total_price": float(customer.total_price),
+            "status": status,
+            "sales_executive_name": f"{customer.sales_exec_first_name} {customer.sales_exec_last_name}",
+            "branch_name": customer.branch_name
+        }
+        formatted_customers.append(formatted_customer)
+
+    return formatted_customers
 
 
 @router.get("/monthly-customers", response_model=List[schemas.CustomerOut])

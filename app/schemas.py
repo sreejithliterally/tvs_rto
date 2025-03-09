@@ -149,7 +149,16 @@ class CustomerOutSales(BaseModel):
         from_attributes = True
 
 class CustomerListResponse(BaseModel):
-    customers: List[CustomerOut]
+    customer_id: int
+    name: str
+    vehicle_name: str
+    total_price: float
+    status: str
+    sales_executive_name: str
+    branch_name: str
+
+    class Config:
+        from_attributes = True
 
 class Token(BaseModel):
     access_token: str
